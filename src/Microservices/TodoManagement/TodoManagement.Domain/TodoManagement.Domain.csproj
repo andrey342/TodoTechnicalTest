@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="AggregatesModel\" />
+    <Folder Include="Events\" />
+    <Folder Include="ValueObjects\" />
+  </ItemGroup>
+</Project>

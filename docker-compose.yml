@@ -1,0 +1,111 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "${SQLSERVER_PASSWORD}"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    networks:
+      - todotechnicaltest_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pidof sqlservr || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - todotechnicaltest_backend
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: kafka
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    depends_on:
+      - zookeeper
+    networks:
+      - todotechnicaltest_backend
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - todotechnicaltest_backend
+      
+  apigateway.ag:
+    container_name: apigateway.ag
+    image: ${DOCKER_REGISTRY-}apigatewayag
+    build:
+      context: .
+      dockerfile: src/ApiGateways/ApiGateway.AG/Dockerfile
+    depends_on:
+      - kafka
+    networks:
+      - todotechnicaltest_backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Cap__Kafka__Servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      Authentication__Authority: ${AUTHORITY_APIGATEWAY}
+      Authentication__Audience: ${AUDIENCE_APIGATEWAY}
+      Authentication__RequireHttpsMetadata: ${REQUIRE_HTTPS_METADATA_APIGATEWAY}
+      Authentication__NameClaimType: ${NAME_CLAIM_TYPE_APIGATEWAY}
+      Authentication__RoleClaimType: ${ROLE_CLAIM_TYPE_APIGATEWAY}
+      Authentication__ClockSkewSeconds: ${CLOCK_SKEW_SECONDS_APIGATEWAY}
+    ports:
+      - "32700:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+
+  todomanagement.api:
+    container_name: todomanagement.api
+    image: ${DOCKER_REGISTRY-}todomanagementapi
+    build:
+      context: .
+      dockerfile: src/Microservices/TodoManagement/TodoManagement.API/Dockerfile
+    depends_on:
+      - sqlserver
+      - kafka
+      - apigateway.ag
+    networks:
+      - todotechnicaltest_backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=TodoManagementDb;User=${SQLSERVER_USER};Password=${SQLSERVER_PASSWORD};TrustServerCertificate=True"
+      Cap__Kafka__Servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      MS__Name: ${MS_TODOMANAGEMENT_NAME}
+      MS__BaseUrl: ${MS_TODOMANAGEMENT_BASEURL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped 
+
+networks:
+  todotechnicaltest_backend:
+    driver: bridge

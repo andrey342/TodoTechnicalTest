@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>{E3236B11-BE66-4F89-B819-CE4C4BA96968}</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>../../../../..</DockerfileContext>
+    <DockerComposeProjectPath>..\..\..\..\docker-compose.dcproj</DockerComposeProjectPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Kafka" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
+    <PackageReference Include="FluentValidation" Version="12.0.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
+    <PackageReference Include="Mediator.SourceGenerator" Version="3.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.5" />
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.24" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1-Preview.1" />
+    <PackageReference Include="Scrutor" Version="7.0.0" />
+    <PackageReference Include="Riok.Mapperly" Version="4.3.0" />
+    <PackageReference Include="Scrutor" Version="7.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Application/Commands\" />
+    <Folder Include="Application/Common/Mappings\" />
+    <Folder Include="Application/Common/Models\" />
+    <Folder Include="Application/DomainEventHandlers\" />
+    <Folder Include="Application/IntegrationEvents\" />
+    <Folder Include="Application/Queries/Specifications\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TodoManagement.Domain\TodoManagement.Domain.csproj" />
+    <ProjectReference Include="..\TodoManagement.Infrastructure\TodoManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Contracts\Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Shared\EventBus\EventBus.csproj" />
+  </ItemGroup>
+</Project>
