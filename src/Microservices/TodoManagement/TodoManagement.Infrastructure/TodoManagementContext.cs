@@ -9,6 +9,10 @@ public class TodoManagementContext : DbContext, IUnitOfWork
 {
     #region DbSets
 
+    public DbSet<TodoList> TodoList { get; set; }
+    public DbSet<TodoItem> TodoItem { get; set; }
+    public DbSet<Progression> Progression { get; set; }
+
     #endregion
 
     private readonly IMediator _mediator;

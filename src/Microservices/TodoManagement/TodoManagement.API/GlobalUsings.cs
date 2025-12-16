@@ -38,3 +38,4 @@ global using TodoManagement.API.Apis.Common.Gateways;
 global using EventBus.Abstractions;
 global using EventBus.Cap;
 global using Contracts.Events;
+global using TodoManagement.Domain.AggregatesModel.TodoListAggregate;

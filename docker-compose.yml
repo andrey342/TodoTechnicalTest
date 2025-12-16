@@ -16,7 +16,7 @@ services:
       retries: 10
 
   zookeeper:
-    image: bitnami/zookeeper:3.9
+    image: bitnamilegacy/zookeeper:3.9.3-debian-12-r22
     container_name: zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
@@ -24,7 +24,7 @@ services:
       - todotechnicaltest_backend
 
   kafka:
-    image: bitnami/kafka:3.7
+    image: bitnamilegacy/kafka:3.3.1-debian-11-r9
     container_name: kafka
     environment:
       KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}

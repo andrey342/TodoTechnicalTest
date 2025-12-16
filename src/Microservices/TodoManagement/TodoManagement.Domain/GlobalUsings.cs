@@ -8,3 +8,4 @@ global using System.Reflection;
 global using TodoManagement.Domain.SeedWork.Specifications;
 global using TodoManagement.Domain.SeedWork;
 global using TodoManagement.Domain.IRepositories.BaseIRepositories;
+global using TodoManagement.Domain.AggregatesModel.TodoListAggregate;
