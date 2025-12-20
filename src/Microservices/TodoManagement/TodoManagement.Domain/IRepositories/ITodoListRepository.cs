@@ -6,5 +6,15 @@ namespace TodoManagement.Domain.IRepositories;
 /// </summary>
 public interface ITodoListRepository : ICommandRepository<TodoList>
 {
-    
+    /// <summary>
+    /// Gets the next available identifier for a new TodoItem.
+    /// </summary>
+    /// <returns>The next available identifier.</returns>
+    int GetNextId();
+
+    /// <summary>
+    /// Gets all valid categories in the system.
+    /// </summary>
+    /// <returns>A list of all unique categories.</returns>
+    List<string> GetAllCategories();
 }

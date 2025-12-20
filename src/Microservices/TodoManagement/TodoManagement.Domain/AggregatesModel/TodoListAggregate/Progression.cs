@@ -6,10 +6,13 @@ public class Progression : Entity
 {
     /// <summary>Foreign key to the owning TodoItem</summary>
     public Guid TodoItemId { get; private set; }
+
     /// <summary>Date when the progression was registered</summary>
     public DateTime ActionDate { get; private set; }
+
     /// <summary>Incremental percent for this progression entry (0 < percent < 100)</summary>
     public decimal Percent { get; private set; }
+
     private Progression() { }
 
     public Progression(
