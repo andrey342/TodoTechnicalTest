@@ -4,4 +4,4 @@ services:
       - "8089:8080" # Development only
   todomanagement.api:
     ports:
-      - "32711:8080"   # Development only: CAP dashboard, debugging, etc.
+      - "32701:8080"   # Development only: CAP dashboard, debugging, etc.

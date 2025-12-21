@@ -1,0 +1,110 @@
+﻿namespace TodoManagement.API.Apis;
+
+using static TodoManagement.API.Apis.Common.Gateways.GatewayTarget;
+
+public static class TodoManagementApi
+{
+    public static RouteGroupBuilder MapTodoManagementApi(this IEndpointRouteBuilder app)
+    {
+        var api = app.MapGroup("todo-management");
+
+        // Commands
+        api.MapPost("/todoList", CreateTodoList)
+            .WithMetadata(new IncludeInGatewayAttribute(
+                targets: [ApiGateway]
+                ));
+
+        // Queries
+        api.MapGet("/todoList/{id:guid}", GetTodoListById)
+            .WithName("GetTodoListById")
+            .WithMetadata(new IncludeInGatewayAttribute());
+
+        api.MapGet("/todoList", GetAllTodoLists)
+            .WithName("GetAllTodoLists")
+            .WithMetadata(new IncludeInGatewayAttribute());
+
+        return api;
+    }
+
+    #region Commands
+
+    private static async Task<Ok<string>> CreateTodoList(
+        CreateTodoListCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var res = await services.Mediator.Send(command);
+
+        return TypedResults.Ok(res);
+    }
+
+    #endregion
+
+    #region Queries
+
+    /// <summary>
+    /// Gets a TodoList by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the TodoList.</param>
+    /// <param name="services">The injected services.</param>
+    /// <param name="includeItems">Whether to include the TodoItems collection.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The TodoList ViewModel if found, otherwise NotFound.</returns>
+    private static async Task<Results<Ok<TodoListViewModel>, NotFound>> GetTodoListById(
+        Guid id,
+        [AsParameters] TodoManagementServices services,
+        bool includeItems = false,
+        CancellationToken cancellationToken = default)
+    {
+        TodoList? todoList;
+        if (includeItems)
+        {
+            // Use FirstOrDefaultAsync with includes when items are needed
+            todoList = await services.TodoListQueries.FirstOrDefaultAsync(
+                filter: tl => tl.Id == id,
+                includes: query => query.Include(tl => tl.Items),
+                cancellationToken);
+        }
+        else
+        {
+            // Use GetByIdAsync when items are not needed (more efficient)
+            todoList = await services.TodoListQueries.GetByIdAsync(id, cancellationToken);
+        }
+
+        if (todoList == null)
+            return TypedResults.NotFound();
+
+        var viewModel = services.Mapper.ToViewModel(todoList);
+        return TypedResults.Ok(viewModel);
+    }
+
+    /// <summary>
+    /// Gets all TodoLists, optionally filtered and including Items.
+    /// </summary>
+    /// <param name="services">The injected services.</param>
+    /// <param name="name">Optional filter by name (case-sensitive contains).</param>
+    /// <param name="includeItems">Whether to include the TodoItems collection.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of TodoList ViewModels.</returns>
+    private static async Task<Ok<IReadOnlyList<TodoListViewModel>>> GetAllTodoLists(
+        [AsParameters] TodoManagementServices services,
+        string? name = null,
+        bool includeItems = false,
+        CancellationToken cancellationToken = default)
+    {
+        Expression<Func<TodoList, bool>>? filter = null;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            filter = tl => tl.Name.Contains(name);
+        }
+
+        var todoLists = await services.TodoListQueries.GetAllAsync(
+            filter: filter,
+            includes: includeItems ? query => query.Include(tl => tl.Items) : null,
+            cancellationToken);
+
+        var viewModels = todoLists.Select(services.Mapper.ToViewModel).ToList();
+        return TypedResults.Ok((IReadOnlyList<TodoListViewModel>)viewModels);
+    }
+
+    #endregion
+}

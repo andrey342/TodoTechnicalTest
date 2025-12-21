@@ -66,12 +66,12 @@ public class TodoItem : Entity
     /// <summary>
     /// Gets whether the TodoItem is completed (total progress >= 100%).
     /// </summary>
-    internal bool IsCompleted => GetTotalProgress() >= 100m;
+    public bool IsCompleted => GetTotalProgress() >= 100m;
 
     /// <summary>
     /// Gets the total accumulated progress percentage.
     /// </summary>
-    internal decimal GetTotalProgress()
+    public decimal GetTotalProgress()
     {
         return _progressions.Sum(p => p.Percent);
     }

@@ -104,7 +104,7 @@ public abstract class BaseValidator<T> : AbstractValidator<T>
                 RuleFor(propertyExpression)
                     .MaximumLength(maxLength)
                     .WithMessage($"{propertyName} must not exceed {maxLength} characters.")
-                    .When(x => !string.IsNullOrWhiteSpace(propertyExpression.Compile().Invoke(x)));
+                    .When(x => propertyExpression.Compile().Invoke(x) != null && !string.IsNullOrWhiteSpace(propertyExpression.Compile().Invoke(x)));
             });
     }
 
@@ -142,7 +142,9 @@ public abstract class BaseValidator<T> : AbstractValidator<T>
                     .Must(value =>
                     {
                         if (!value.HasValue) return true;
-                        var parts = value.ToString().Split('.');
+                        var stringValue = value.Value.ToString();
+                        if (string.IsNullOrEmpty(stringValue)) return true;
+                        var parts = stringValue.Split('.');
                         var integerDigits = parts[0].Length;
                         var fractionalDigits = parts.Length > 1 ? parts[1].Length : 0;
                         return integerDigits + fractionalDigits <= precision && fractionalDigits <= scale;
@@ -237,6 +239,58 @@ public abstract class BaseValidator<T> : AbstractValidator<T>
             .Must(number => !number.HasValue || number > 0)
             .WithMessage($"{propertyName} must be a positive number.")
             .When(x => propertyExpression.Compile().Invoke(x).HasValue);
+    }
+
+    /// <summary>
+    /// Validates that a property value is unique in the database for the specified entity type.
+    /// Generic method that works with any property type (string, int, Guid, etc.).
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type to check uniqueness against.</typeparam>
+    /// <typeparam name="TProperty">The type of the property being validated.</typeparam>
+    /// <param name="propertyExpression">Expression to get the property value from the command/DTO.</param>
+    /// <param name="entityFilterBuilder">Function that builds the filter expression. Takes the property value and returns an expression to compare entity properties (e.g., name => entity => entity.Name == name).</param>
+    /// <remarks>
+    /// The entityFilterBuilder parameter is necessary because Entity Framework needs to translate the comparison expression to SQL.
+    /// We need to capture the command/DTO value and build a proper expression lambda that EF can use.
+    /// This differs from ValidateGuid which validates existence (checking if a Guid FK exists), while this validates uniqueness (checking if a value is already taken).
+    /// 
+    /// Why ValidateGuid doesn't need entityFilterBuilder:
+    /// - ValidateGuid validates foreign key existence (entity.Id == guidValue), where the property to compare is always "Id"
+    /// - ValidateUniqueness can compare any property (entity.Name == name, entity.Email == email, etc.), so we need to specify which property
+    /// - In ValidateGuid, we already know we're comparing against the Id property, so we can build the expression directly
+    /// 
+    /// Example usage: ValidateUniqueness&lt;TodoList, string&gt;(cmd => cmd.Name, name => entity => entity.Name == name)
+    /// </remarks>
+    protected void ValidateUniqueness<TEntity, TProperty>(
+        Expression<Func<T, TProperty?>> propertyExpression,
+        Func<TProperty, Expression<Func<TEntity, bool>>> entityFilterBuilder)
+        where TEntity : Entity
+        where TProperty : notnull
+    {
+        var propertyName = GetPropertyName(propertyExpression);
+
+        RuleFor(propertyExpression)
+            .MustAsync(async (value, cancellation) =>
+            {
+                if (value == null) return true; // Skip validation if null (should be handled by required validation)
+                if (value is string strValue && string.IsNullOrWhiteSpace(strValue)) return true; // Skip validation if empty string
+
+                var repo = GetRepository<TEntity>();
+                // Build the filter expression using the provided builder function
+                // This captures the value and creates: entity => entity.Property == value
+                var filter = entityFilterBuilder(value);
+                
+                // Check if any entity exists with the same value (invert result: we want it to NOT exist)
+                return !await repo.ExistsAsync(filter, cancellation);
+            })
+            .When(x =>
+            {
+                var value = propertyExpression.Compile().Invoke(x);
+                if (value == null) return false;
+                if (value is string strValue && string.IsNullOrWhiteSpace(strValue)) return false;
+                return true;
+            })
+            .WithMessage($"{propertyName} already exists.");
     }
 
     #endregion

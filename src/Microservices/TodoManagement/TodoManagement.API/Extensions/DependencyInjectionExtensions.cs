@@ -54,14 +54,16 @@ internal static class DependencyInjectionExtensions
             options.PipelineBehaviors =
             [
                 typeof(LoggingBehavior<,>),
-                typeof(ValidationBehavior<,>),
                 typeof(IdempotencyBehavior<,>),
+                typeof(ValidationBehavior<,>),
                 typeof(TransactionBehavior<,>)
             ];
         });
 
-        // Register all validators from loaded assemblies for FluentValidation.
-        services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+        // Register all validators from the application assembly for FluentValidation.
+        services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+        
+        // Register idempotent command validator as a fallback for commands that implement IIdempotentRequest.
         services.AddTransient(typeof(IValidator<>), typeof(IdempotentCommandValidator<>));
 
         // Register Mapper files from all loaded assemblies.

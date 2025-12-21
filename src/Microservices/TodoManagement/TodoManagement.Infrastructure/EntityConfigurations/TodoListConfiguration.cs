@@ -23,6 +23,9 @@ public class TodoListConfiguration : IEntityTypeConfiguration<TodoList>
 
         // Index Configuration
 
+        builder.HasIndex(e => e.Name)
+            .HasDatabaseName("IX_TodoList_Name")
+            .IsUnique();
 
         // Owned Value Objects Configuration
 

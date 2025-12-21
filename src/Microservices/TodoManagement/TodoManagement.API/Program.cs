@@ -29,5 +29,8 @@ app.MapDefaultControllerRoute();
 // Register health check endpoints.
 app.UseCustomHealthChecks();
 
+// Map the TodoManagement API endpoints.
+app.MapTodoManagementApi();
+
 // Start the application.
 app.Run();
