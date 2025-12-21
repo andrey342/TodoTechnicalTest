@@ -22,6 +22,19 @@ public class TodoItem : Entity
     private readonly List<Progression> _progressions = new();
     public IReadOnlyCollection<Progression> Progressions => _progressions.AsReadOnly();
 
+    /// <summary>
+    /// Gets whether the TodoItem is completed (total progress >= 100%).
+    /// </summary>
+    public bool IsCompleted => GetTotalProgress() >= 100m;
+
+    /// <summary>
+    /// Gets the total accumulated progress percentage.
+    /// </summary>
+    public decimal GetTotalProgress()
+    {
+        return _progressions.Sum(p => p.Percent);
+    }
+
     private TodoItem() { }
 
     public TodoItem(
@@ -61,19 +74,6 @@ public class TodoItem : Entity
     internal void UpdateCategory(string category)
     {
         Category = category;
-    }
-
-    /// <summary>
-    /// Gets whether the TodoItem is completed (total progress >= 100%).
-    /// </summary>
-    public bool IsCompleted => GetTotalProgress() >= 100m;
-
-    /// <summary>
-    /// Gets the total accumulated progress percentage.
-    /// </summary>
-    public decimal GetTotalProgress()
-    {
-        return _progressions.Sum(p => p.Percent);
     }
 
     /// <summary>

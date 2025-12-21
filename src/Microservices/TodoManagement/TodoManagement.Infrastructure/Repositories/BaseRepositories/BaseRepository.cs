@@ -25,6 +25,28 @@ public class BaseRepository<T> : IBaseRepository<T> where T : Entity
         => await _dbSet.FindAsync(new object[] { id }, cancellationToken);
 
     /// <summary>
+    /// Retrieves an entity by its unique identifier with eager loading of related entities.
+    /// </summary>
+    /// <param name="id">The unique identifier of the entity.</param>
+    /// <param name="includes">A function to specify related entities to include.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The entity if found; otherwise, null.</returns>
+    public async Task<T> GetByIdAsync(
+        Guid id,
+        Func<IQueryable<T>, IQueryable<T>> includes,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbSet.AsQueryable();
+        
+        if (includes != null)
+        {
+            query = includes(query);
+        }
+        
+        return await query.FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+    }
+
+    /// <summary>
     /// Determines whether an entity with the specified identifier exists.
     /// </summary>
     /// <param name="id">The unique identifier of the entity.</param>

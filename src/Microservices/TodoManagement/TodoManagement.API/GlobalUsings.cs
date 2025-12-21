@@ -45,3 +45,7 @@ global using TodoManagement.API.Application.Common.Mappings;
 global using TodoManagement.Domain.IRepositories;
 global using TodoManagement.API.Application.Queries.TodoListQueries;
 global using TodoManagement.API.Application.Queries;
+global using TodoManagement.API.Application.Commands.TodoManagement.AddTodoItem;
+global using TodoManagement.API.Application.Commands.TodoManagement.UpdateTodoItem;
+global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoItem;
+global using TodoManagement.API.Application.Commands.TodoManagement.RegisterProgression;

@@ -293,6 +293,46 @@ public abstract class BaseValidator<T> : AbstractValidator<T>
             .WithMessage($"{propertyName} already exists.");
     }
 
+    /// <summary>
+    /// Validates that an entity exists in the database using a custom filter expression.
+    /// This method is useful for validating existence using composite keys or multiple properties.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type to check existence against.</typeparam>
+    /// <typeparam name="TProperty">The type of the property being validated (can be a complex type like a DTO).</typeparam>
+    /// <param name="propertyExpression">Expression to get the property value from the command/DTO.</param>
+    /// <param name="entityFilterBuilder">Function that builds the filter expression. Takes the property value and returns an expression to compare entity properties (e.g., dto => entity => entity.TodoListId == dto.TodoListId && entity.ItemId == dto.ItemId).</param>
+    /// <param name="errorMessage">Custom error message to display if the entity does not exist.</param>
+    /// <remarks>
+    /// The entityFilterBuilder parameter is necessary because Entity Framework needs to translate the comparison expression to SQL.
+    /// We need to capture the command/DTO value and build a proper expression lambda that EF can use.
+    /// 
+    /// Example usage: ValidateExists&lt;TodoItem, UpdateTodoItemDto&gt;(
+    ///     cmd => cmd.TodoItem,
+    ///     dto => entity => entity.TodoListId == dto.TodoListId && entity.ItemId == dto.ItemId,
+    ///     "TodoItem does not exist.")
+    /// </remarks>
+    protected void ValidateExists<TEntity, TProperty>(
+        Expression<Func<T, TProperty>> propertyExpression,
+        Func<TProperty, Expression<Func<TEntity, bool>>> entityFilterBuilder,
+        string errorMessage = "Entity does not exist.")
+        where TEntity : Entity
+    {
+        RuleFor(propertyExpression)
+            .MustAsync(async (value, cancellation) =>
+            {
+                if (value == null) return false;
+                
+                var repo = GetRepository<TEntity>();
+                // Build the filter expression using the provided builder function
+                // This captures the value and creates: entity => entity.Property1 == value.Property1 && entity.Property2 == value.Property2
+                var filter = entityFilterBuilder(value);
+                
+                // Check if entity exists with the specified filter
+                return await repo.ExistsAsync(filter, cancellation);
+            })
+            .WithMessage(errorMessage);
+    }
+
     #endregion
 
     #region Helpers

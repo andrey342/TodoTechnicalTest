@@ -11,8 +11,52 @@ public partial class TodoListMapper
     {
         return new TodoList(
             name: dto.Name,
-            lastissuedpublicid: 0);
+            lastissuedpublicid: 0
+            );
     }
+
+    public TodoItem ToEntity(AddTodoItemDto dto)
+    {
+        return new TodoItem(
+            todolistid: dto.TodoListId,
+            itemid: 0,
+            title: dto.Title,
+            description: dto.Description,
+            category: dto.Category
+            );
+    }
+
+    public TodoItem ToEntity(UpdateTodoItemDto dto)
+    {
+        return new TodoItem(
+            todolistid: dto.TodoListId,
+            itemid: dto.ItemId,
+            title: string.Empty,
+            description: dto.Description,
+            category: string.Empty
+            );
+    }
+
+    public TodoItem ToEntity(RemoveTodoItemDto dto)
+    {
+        return new TodoItem(
+            todolistid: dto.TodoListId,
+            itemid: dto.ItemId,
+            title: string.Empty,
+            description: string.Empty,
+            category: string.Empty
+            );
+    }
+
+    public Progression ToEntity(RegisterProgressionDto dto)
+    {
+        return new Progression(
+            todoitemid: Guid.Empty,
+            actiondate: dto.ActionDate,
+            percent: dto.Percent
+            );
+    }
+
     #endregion
 
     #region ViewModel mappings

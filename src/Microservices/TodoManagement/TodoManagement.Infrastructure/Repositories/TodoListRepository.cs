@@ -12,7 +12,6 @@ public class TodoListRepository : CommandRepository<TodoList>, ITodoListReposito
     public int GetNextId()
     {
         // Get the TodoList (assuming there is a main one or the first available)
-        // In a real scenario, there could be logic to determine which TodoList to use
         var todoList = _dbSet
             .OrderBy(tl => tl.Name)
             .FirstOrDefault();

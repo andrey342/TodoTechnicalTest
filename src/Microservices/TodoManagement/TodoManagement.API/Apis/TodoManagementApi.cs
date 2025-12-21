@@ -11,8 +11,20 @@ public static class TodoManagementApi
         // Commands
         api.MapPost("/todoList", CreateTodoList)
             .WithMetadata(new IncludeInGatewayAttribute(
-                targets: [ApiGateway]
+                targets: [ApiGateway] // If you want to specify targets, if not, the default is all targets
                 ));
+
+        api.MapPost("/todoList/item", AddTodoItem)
+            .WithMetadata(new IncludeInGatewayAttribute());
+
+        api.MapPut("/todoList/item", UpdateTodoItem)
+            .WithMetadata(new IncludeInGatewayAttribute());
+
+        api.MapDelete("/todoList/item", RemoveTodoItem)
+            .WithMetadata(new IncludeInGatewayAttribute());
+
+        api.MapPost("/todoList/item/progression", RegisterProgression)
+            .WithMetadata(new IncludeInGatewayAttribute());
 
         // Queries
         api.MapGet("/todoList/{id:guid}", GetTodoListById)
@@ -30,6 +42,42 @@ public static class TodoManagementApi
 
     private static async Task<Ok<string>> CreateTodoList(
         CreateTodoListCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var res = await services.Mediator.Send(command);
+
+        return TypedResults.Ok(res);
+    }
+
+    private static async Task<Ok<string>> AddTodoItem(
+        AddTodoItemCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var res = await services.Mediator.Send(command);
+
+        return TypedResults.Ok(res);
+    }
+
+    private static async Task<Ok<string>> UpdateTodoItem(
+        UpdateTodoItemCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var res = await services.Mediator.Send(command);
+
+        return TypedResults.Ok(res);
+    }
+
+    private static async Task<Ok<string>> RemoveTodoItem(
+        [FromBody] RemoveTodoItemCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var res = await services.Mediator.Send(command);
+
+        return TypedResults.Ok(res);
+    }
+
+    private static async Task<Ok<string>> RegisterProgression(
+        RegisterProgressionCommand command,
         [AsParameters] TodoManagementServices services)
     {
         var res = await services.Mediator.Send(command);
@@ -61,7 +109,8 @@ public static class TodoManagementApi
             // Use FirstOrDefaultAsync with includes when items are needed
             todoList = await services.TodoListQueries.FirstOrDefaultAsync(
                 filter: tl => tl.Id == id,
-                includes: query => query.Include(tl => tl.Items),
+                includes: query => query.Include(tl => tl.Items)
+                                        .ThenInclude(i => i.Progressions),
                 cancellationToken);
         }
         else
@@ -99,7 +148,8 @@ public static class TodoManagementApi
 
         var todoLists = await services.TodoListQueries.GetAllAsync(
             filter: filter,
-            includes: includeItems ? query => query.Include(tl => tl.Items) : null,
+            includes: includeItems ? query => query.Include(tl => tl.Items)
+                                                   .ThenInclude(i => i.Progressions) : null,
             cancellationToken);
 
         var viewModels = todoLists.Select(services.Mapper.ToViewModel).ToList();

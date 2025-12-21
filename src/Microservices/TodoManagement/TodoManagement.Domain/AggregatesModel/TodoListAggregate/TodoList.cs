@@ -7,7 +7,7 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
     /// <summary>List name</summary>
     public string Name { get; private set; } = string.Empty;
 
-    /// <summary>Last issued public numeric Id (supports repository GetNextId)</summary>
+    /// <summary>Last issued public numeric Id</summary>
     public int LastIssuedPublicId { get; private set; } = 0;
 
     /// <summary>RowVersion for concurrency when issuing IDs / updating the list</summary>
