@@ -20,8 +20,8 @@ public class AddTodoItemCommandHandler : ICommandHandler<AddTodoItemCommand, str
 
         var todoList = await _repository.GetByIdAsync(todoItem.TodoListId, cancellationToken: cancellationToken);
 
-        // Get next available ItemId for this TodoList
-        var nextItemId = todoList.LastIssuedPublicId + 1;
+        // Get next available ItemId globally
+        var nextItemId = _repository.GetNextId();
 
         // Add item to the aggregate
         todoList.AddItem(
@@ -29,9 +29,6 @@ public class AddTodoItemCommandHandler : ICommandHandler<AddTodoItemCommand, str
             title: todoItem.Title,
             description: todoItem.Description,
             category: todoItem.Category);
-
-        // Update LastIssuedPublicId to reflect the new ID
-        todoList.UpdateLastIssuedPublicId(nextItemId);
 
         // Update the aggregate in the repository
         await _repository.UpdateAsync(todoList, cancellationToken);

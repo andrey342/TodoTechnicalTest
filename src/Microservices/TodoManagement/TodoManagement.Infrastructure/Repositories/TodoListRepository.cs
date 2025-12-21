@@ -11,22 +11,13 @@ public class TodoListRepository : CommandRepository<TodoList>, ITodoListReposito
     /// <inheritdoc/>
     public int GetNextId()
     {
-        // Get the TodoList (assuming there is a main one or the first available)
-        var todoList = _dbSet
-            .OrderBy(tl => tl.Name)
+        // Get the maximum ItemId across all TodoItems globally
+        var maxItemId = _context.TodoItem
+            .OrderByDescending(i => i.ItemId)
+            .Select(i => i.ItemId)
             .FirstOrDefault();
-
-        if (todoList == null)
-        {
-            // If no TodoList exists, start from 1
-            return 1;
-        }
-
-        // Increment and update LastIssuedPublicId
-        var nextId = todoList.LastIssuedPublicId + 1;
-        todoList.UpdateLastIssuedPublicId(nextId);
         
-        return nextId;
+        return maxItemId + 1;
     }
 
     /// <inheritdoc/>

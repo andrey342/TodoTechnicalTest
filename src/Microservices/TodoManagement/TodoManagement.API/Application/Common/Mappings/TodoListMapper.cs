@@ -10,8 +10,7 @@ public partial class TodoListMapper
     public TodoList ToEntity(TodoListDto dto)
     {
         return new TodoList(
-            name: dto.Name,
-            lastissuedpublicid: 0
+            name: dto.Name
             );
     }
 
@@ -67,7 +66,6 @@ public partial class TodoListMapper
         {
             Id = entity.Id,
             Name = entity.Name,
-            LastIssuedPublicId = entity.LastIssuedPublicId,
             Items = entity.Items.Select(ToViewModel).ToList()
         };
     }

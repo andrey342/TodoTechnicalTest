@@ -27,8 +27,8 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
 
         // Index Configuration
 
-        builder.HasIndex(e => new { e.TodoListId, e.ItemId })
-            .HasDatabaseName("IX_TodoItem_TodoList_ItemId")
+        builder.HasIndex(e => e.ItemId)
+            .HasDatabaseName("IX_TodoItem_ItemId_Unique")
             .IsUnique();
         builder.HasIndex(e => e.Category)
             .HasDatabaseName("IX_TodoItem_Category");

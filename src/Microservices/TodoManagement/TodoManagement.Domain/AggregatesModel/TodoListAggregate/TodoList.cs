@@ -7,10 +7,7 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
     /// <summary>List name</summary>
     public string Name { get; private set; } = string.Empty;
 
-    /// <summary>Last issued public numeric Id</summary>
-    public int LastIssuedPublicId { get; private set; } = 0;
-
-    /// <summary>RowVersion for concurrency when issuing IDs / updating the list</summary>
+    /// <summary>RowVersion for concurrency</summary>
     public byte[] RowVersion { get; private set; } = default!;
 
     private readonly List<TodoItem> _items = new();
@@ -18,13 +15,10 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
 
     private TodoList() { }
 
-    public TodoList(
-        string name,
-        int lastissuedpublicid)
+    public TodoList(string name)
     {
-        ValidateDomainInvariants(name, lastissuedpublicid);
+        ValidateDomainInvariants(name);
         Name = name;
-        LastIssuedPublicId = lastissuedpublicid;
     }
 
     #region Properties behavior
@@ -33,12 +27,6 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
     {
         ValidateName(name);
         Name = name;
-    }
-
-    public void UpdateLastIssuedPublicId(int lastissuedpublicid)
-    {
-        ValidateLastIssuedPublicId(lastissuedpublicid);
-        LastIssuedPublicId = lastissuedpublicid;
     }
 
     #endregion
@@ -135,7 +123,7 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
 
     #region Domain rules
 
-    private const int NameMaxLength = 200;
+    private const int NameMaxLength = 50;
 
     private static void ValidateName(string name)
     {
@@ -149,13 +137,7 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
         }
     }
 
-    private static void ValidateLastIssuedPublicId(int lastissuedpublicid)
-    {
-        if (lastissuedpublicid < 0)
-        {
-            throw new ArgumentException("LastIssuedPublicId must be non-negative", nameof(lastissuedpublicid));
-        }
-    }
+
 
     private static void ValidateTitle(string title)
     {
@@ -200,12 +182,9 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
         }
     }
 
-    private static void ValidateDomainInvariants(
-        string name,
-        int lastissuedpublicid)
+    private static void ValidateDomainInvariants(string name)
     {
         ValidateName(name);
-        ValidateLastIssuedPublicId(lastissuedpublicid);
     }
 
     #endregion

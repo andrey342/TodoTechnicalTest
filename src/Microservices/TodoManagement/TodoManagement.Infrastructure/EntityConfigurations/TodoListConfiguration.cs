@@ -17,8 +17,6 @@ public class TodoListConfiguration : IEntityTypeConfiguration<TodoList>
 
         builder.Property(e => e.Name).HasMaxLength(200).IsUnicode(true).IsRequired();
 
-        builder.Property(e => e.LastIssuedPublicId).IsRequired().HasDefaultValue(0);
-
         builder.Property(e => e.RowVersion).IsRequired().IsRowVersion().ValueGeneratedOnAddOrUpdate();
 
         // Index Configuration

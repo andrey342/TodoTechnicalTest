@@ -18,11 +18,6 @@ public record TodoListViewModel
     public string Name { get; init; } = string.Empty;
 
     /// <summary>
-    /// Last issued public numeric Id (supports repository GetNextId).
-    /// </summary>
-    public int LastIssuedPublicId { get; init; }
-
-    /// <summary>
     /// Collection of TodoItems in this TodoList (optional, only included when requested).
     /// </summary>
     public List<TodoItemViewModel> Items { get; init; } = new();
