@@ -16,14 +16,14 @@ public static class CategoryMaster
     /// </summary>
     public static IReadOnlyList<string> ValidCategories { get; } = new List<string>
     {
-        "Work",
-        "Personal",
-        "Shopping",
-        "Health",
-        "Finance",
-        "Education",
-        "Home",
-        "Travel"
+        "Bug Fix",
+        "Feature",
+        "Refactor",
+        "Code Review",
+        "Documentation",
+        "Testing",
+        "DevOps",
+        "Research"
     }.AsReadOnly();
 
     /// <summary>
