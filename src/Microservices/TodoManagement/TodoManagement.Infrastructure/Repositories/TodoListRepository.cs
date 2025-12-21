@@ -21,15 +21,13 @@ public class TodoListRepository : CommandRepository<TodoList>, ITodoListReposito
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// DESIGN DECISION: Returns predefined categories from CategoryMaster instead of querying
+    /// database. This simplifies the implementation while meeting the interface requirements.
+    /// See CategoryMaster.cs for the full list and rationale.
+    /// </remarks>
     public List<string> GetAllCategories()
     {
-        // Get all unique categories from existing TodoItems
-        var categories = _context.TodoItem
-            .Select(item => item.Category)
-            .Distinct()
-            .OrderBy(c => c)
-            .ToList();
-
-        return categories;
+        return CategoryMaster.ValidCategories.ToList();
     }
 }

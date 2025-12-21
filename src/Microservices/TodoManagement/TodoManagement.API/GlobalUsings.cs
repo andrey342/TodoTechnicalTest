@@ -49,3 +49,4 @@ global using TodoManagement.API.Application.Commands.TodoManagement.AddTodoItem;
 global using TodoManagement.API.Application.Commands.TodoManagement.UpdateTodoItem;
 global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoItem;
 global using TodoManagement.API.Application.Commands.TodoManagement.RegisterProgression;
+global using TodoManagement.Domain.AggregatesModel.TodoListAggregate.Masters;

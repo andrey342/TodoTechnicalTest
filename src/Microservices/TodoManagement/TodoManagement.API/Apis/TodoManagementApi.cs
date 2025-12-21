@@ -28,11 +28,12 @@ public static class TodoManagementApi
 
         // Queries
         api.MapGet("/todoList/{id:guid}", GetTodoListById)
-            .WithName("GetTodoListById")
             .WithMetadata(new IncludeInGatewayAttribute());
 
         api.MapGet("/todoList", GetAllTodoLists)
-            .WithName("GetAllTodoLists")
+            .WithMetadata(new IncludeInGatewayAttribute());
+
+        api.MapGet("/categories", GetAllCategories)
             .WithMetadata(new IncludeInGatewayAttribute());
 
         return api;
@@ -154,6 +155,17 @@ public static class TodoManagementApi
 
         var viewModels = todoLists.Select(services.Mapper.ToViewModel).ToList();
         return TypedResults.Ok((IReadOnlyList<TodoListViewModel>)viewModels);
+    }
+
+    /// <summary>
+    /// Gets all valid categories in the system.
+    /// </summary>
+    /// <param name="services">The injected services.</param>
+    /// <returns>A list of valid category names.</returns>
+    private static Ok<IReadOnlyList<string>> GetAllCategories()
+    {
+        var categories = CategoryMaster.ValidCategories.ToList();
+        return TypedResults.Ok((IReadOnlyList<string>)categories);
     }
 
     #endregion

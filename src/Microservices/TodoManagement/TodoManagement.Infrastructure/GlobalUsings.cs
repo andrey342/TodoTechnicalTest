@@ -13,3 +13,4 @@ global using TodoManagement.Domain.IRepositories.BaseIRepositories;
 global using TodoManagement.Infrastructure.Repositories.BaseRepositories;
 global using TodoManagement.Domain.IRepositories;
 global using TodoManagement.Domain.AggregatesModel.TodoListAggregate;
+global using TodoManagement.Domain.AggregatesModel.TodoListAggregate.Masters;

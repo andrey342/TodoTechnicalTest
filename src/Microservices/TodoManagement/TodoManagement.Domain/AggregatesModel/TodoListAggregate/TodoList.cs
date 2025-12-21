@@ -137,8 +137,6 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
         }
     }
 
-
-
     private static void ValidateTitle(string title)
     {
         if (string.IsNullOrWhiteSpace(title))
@@ -160,6 +158,12 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
         if (string.IsNullOrWhiteSpace(category))
         {
             throw new ArgumentException("Category is required", nameof(category));
+        }
+
+        if (!Masters.CategoryMaster.IsValidCategory(category))
+        {
+            var validCategories = string.Join(", ", Masters.CategoryMaster.ValidCategories);
+            throw new ArgumentException($"Category '{category}' is invalid. Valid categories are: {validCategories}", nameof(category));
         }
     }
 

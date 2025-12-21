@@ -69,7 +69,7 @@ El sistema implementa el patrón de agregados de DDD:
 - **Responsabilidad**: Actúa como raíz del agregado y punto de entrada único para todas las operaciones sobre TodoItems
 - **Invariantes**: 
   - Gestiona la colección de TodoItems
-  - Controla la emisión de IDs secuenciales mediante `LastIssuedPublicId`
+  - Gestiona la colección de TodoItems
   - Implementa `ITodoList` para exponer operaciones de negocio
 
 #### **TodoItem (Entity)**
@@ -128,8 +128,8 @@ public interface ITodoListRepository : ICommandRepository<TodoList>
 ```
 
 **Implementación**:
-- `GetNextId()`: Obtiene el siguiente ID disponible incrementando `LastIssuedPublicId` del TodoList
-- `GetAllCategories()`: Retorna todas las categorías únicas de los TodoItems existentes
+- `GetNextId()`: Retorna el siguiente ID disponible calculando `MAX(ItemId) + 1` de forma global para todos los items
+- `GetAllCategories()`: Retorna una lista predefinida de categorías válidas (implementadas como un Master estático en el Dominio para simplificar, ver `CategoryMaster.cs`)
 
 ---
 
