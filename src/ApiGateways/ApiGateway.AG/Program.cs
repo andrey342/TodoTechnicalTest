@@ -18,6 +18,9 @@ builder.Services.AddCustomSwagger();
 builder.Services.AddCustomHealthChecks(builder.Configuration);
 builder.Services.AddCustomProblemDetails();
 
+// Register CORS policy
+builder.Services.AddCustomCors(builder.Configuration);
+
 // Register YARP reverse proxy services.
 // AddReverseProxy registers the core reverse proxy functionality.
 builder.Services.AddReverseProxy();
@@ -33,6 +36,9 @@ var app = builder.Build();
 
 // Register global exception middleware
 app.UseCustomMiddlewares();
+
+// Enable CORS
+app.UseCustomCors();
 
 // Enable authentication and authorization middleware only outside development
 if (!isDevelopment)
