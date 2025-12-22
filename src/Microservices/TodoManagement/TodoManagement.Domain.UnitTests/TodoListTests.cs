@@ -1,8 +1,4 @@
-using FluentAssertions;
-using TodoManagement.Domain.AggregatesModel.TodoListAggregate;
-using Xunit;
-
-namespace TodoManagement.UnitTests;
+namespace TodoManagement.Domain.UnitTests;
 
 public class TodoListTests
 {

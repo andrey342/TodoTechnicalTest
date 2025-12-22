@@ -1,0 +1,15 @@
+﻿global using FluentAssertions;
+global using FluentValidation.TestHelper;
+global using Moq;
+global using TodoManagement.API.Application.Commands.TodoManagement.AddTodoItem;
+global using TodoManagement.API.Application.Common.Mappings;
+global using TodoManagement.Domain.AggregatesModel.TodoListAggregate;
+global using TodoManagement.Domain.IRepositories;
+global using TodoManagement.Domain.IRepositories.BaseIRepositories;
+global using TodoManagement.Domain.SeedWork;
+global using System.Linq.Expressions;
+global using TodoManagement.API.Application.Commands.TodoManagement.Create;
+global using TodoManagement.API.Application.Commands.TodoManagement.RegisterProgression;
+global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoItem;
+global using TodoManagement.API.Application.Commands.TodoManagement.UpdateTodoItem;
+global using TodoManagement.API.Application.Common.Idempotency;
