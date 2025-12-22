@@ -11,7 +11,8 @@
 7. [Behaviours del Pipeline](#behaviours-del-pipeline)
 8. [CAP - Event Bus](#cap---event-bus)
 9. [API Gateway y Swagger Dinámico](#api-gateway-y-swagger-dinámico)
-10. [Proyectos Shared](#proyectos-shared)
+9. [API Gateway y Swagger Dinámico](#api-gateway-y-swagger-dinámico)
+10. [Proyectos Shared y Utilidades](#proyectos-shared-y-utilidades)
 11. [Extensiones del Program.cs](#extensiones-del-programcs)
 12. [Docker y Containerización](#docker-y-containerización)
 13. [Decisiones Técnicas](#decisiones-técnicas)
@@ -244,6 +245,15 @@ Interfaz para operaciones de escritura en agregados raíz. Hereda de `IBaseRepos
 
 **Uso**: Se utiliza para todas las operaciones que modifican el estado del sistema (crear, actualizar, eliminar).
 
+#### IBaseRepository<T>
+
+Interfaz base que proporciona funcionalidades comunes de lectura y verificación:
+
+**Métodos Principales**:
+- `Task<T> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)`: Obtención simple por ID.
+- `Task<T> GetByIdAsync(Guid id, Func<IQueryable<T>, IQueryable<T>> includes, CancellationToken cancellationToken = default)`: **Nuevo método** que permite especificar relaciones (`Includes`) para carga ansiosa (Eager Loading) al obtener por ID.
+- `Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)`: Verificación eficiente de existencia.
+
 #### IQueryRepository<T>
 
 Interfaz para operaciones de lectura optimizadas. Hereda de `IBaseRepository<T>` y proporciona:
@@ -311,11 +321,19 @@ El sistema implementa un pipeline de comportamientos transversales usando el pat
 
 **Beneficio**: Trazabilidad completa de las operaciones para debugging y auditoría.
 
-### 2. ValidationBehavior
+**Beneficio**: Validación centralizada y consistente antes de procesar la lógica de negocio.
+
+**BaseValidator**:
+Se utiliza una clase base `BaseValidator<T>` que simplifica drásticamente la creación de validadores mediante métodos genéricos predefinidos como:
+- `ValidateUniqueness`: Verifica unicidad en BD.
+- `ValidateExists`: Verifica existencia de claves foráneas.
+- `Require`: Validaciones de obligatoriedad estándar.
+
+### 3. ValidationBehavior
 
 **Propósito**: Valida las solicitudes usando **FluentValidation**.
 
-**Orden**: Segundo en el pipeline
+**Orden**: Tercero en el pipeline (después de Idempotency)
 
 **Implementación**:
 - Ejecuta todos los validadores en paralelo
@@ -324,18 +342,19 @@ El sistema implementa un pipeline de comportamientos transversales usando el pat
 
 **Beneficio**: Validación centralizada y consistente antes de procesar la lógica de negocio.
 
-### 3. IdempotencyBehavior
+### 2. IdempotencyBehavior
 
 **Propósito**: Garantiza la idempotencia de las operaciones.
 
-**Orden**: Tercero en el pipeline
+**Orden**: **Segundo** en el pipeline (antes de Validación)
 
 **Implementación**:
 - Verifica si la solicitud ya fue procesada usando `IRequestManager`
 - Si ya fue procesada, retorna la respuesta almacenada
 - Si no, procesa y almacena la respuesta
+- Se ejecuta antes de la validación para evitar re-validar solicitudes ya procesadas y exitosas.
 
-**Beneficio**: Previene procesamiento duplicado en caso de reintentos o fallos de red.
+**Beneficio**: Previene procesamiento duplicado y optimiza el rendimiento en reintentos.
 
 ### 4. TransactionBehavior
 
@@ -353,6 +372,14 @@ El sistema implementa un pipeline de comportamientos transversales usando el pat
 - **TransactionBehavior**: Gestiona transacciones a nivel de aplicación, incluyendo lógica de negocio y coordinación entre múltiples repositorios
 
 **Beneficio**: Garantiza consistencia transaccional en operaciones complejas.
+
+**Persistencia y SaveEntities**:
+Aunque el `TransactionBehavior` realiza el commit de la transacción (lo que persiste los cambios mediante `SaveChangesAsync`), el método `IUnitOfWork.SaveEntitiesAsync` es el encargado de despachar los **Eventos de Dominio**.
+- Normalmente el flujo confirma la transacción y guarda cambios.
+- Si se requiere asegurar el despacho de eventos de dominio antes del commit o en un punto específico, se puede forzar en el handler llamando a:
+  ```csharp
+  await _repository.UnitOfWork.SaveEntitiesAsync(cancellationToken);
+  ```
 
 ---
 
@@ -432,21 +459,21 @@ El sistema implementa un **API Gateway** usando **YARP (Yet Another Reverse Prox
 - **Escalabilidad**: Nuevos microservicios se integran automáticamente
 - **Sin Reinicios**: El gateway se actualiza dinámicamente sin reiniciar
 
-**Marcado de Operaciones**:
-```csharp
-[OperationFilter(typeof(IncludeInGatewayOperationFilter))]
-// En el controlador:
-[HttpPost]
-[SwaggerOperation(Extensions = new Dictionary<string, IOpenApiExtension>
-{
-    ["x-include-in-gateway"] = new OpenApiBoolean(true),
-    ["x-gateway-targets"] = new OpenApiArray { new OpenApiString("apigateway") }
-})]
-```
+**Control de Publicación (Metadata)**:
+Se utiliza el atributo `IncludeInGatewayAttribute` para controlar granularmente la exposición:
+- Si no se especifica `Targets`, la API se publica en **TODOS** los gateways configurados en el enum `GatewayTarget`.
+- Se puede restringir a un gateway específico (ej: `targets: [ApiGateway]`) como se ha hecho en algunas APIs de ejemplo.
+- Permite decidir endpoint por endpoint qué se expone y dónde.
+
+**Seguridad**:
+El API Gateway tiene implementada autenticación JWT, pero **se encuentra desactivada en entorno de Desarrollo** para facilitar el debugging y las pruebas manuales sin necesidad de tokens.
 
 ---
 
-## Proyectos Shared
+## Proyectos Shared y Utilidades
+
+### Global Usings
+Para mantener el código limpio y reducir el "ruido" en los archivos, se utilizan archivos `GlobalUsings.cs` en cada proyecto (API, Domain, Infrastructure). Esto centraliza las importaciones comunes y reduce el tamaño de los archivos de código.
 
 ### Shared/Contracts
 
@@ -498,6 +525,7 @@ El sistema utiliza extensiones para mantener el `Program.cs` limpio y organizado
 - **SwaggerExtensions**: Configuración de Swagger/OpenAPI
 - **HealthChecksExtensions**: Health checks para SQL Server y Kafka
 - **ProblemDetailsExtensions**: Manejo estándar de errores HTTP
+- **Mapster/Mapperly**: Se utiliza **Mapperly** para el mapeo de objetos (DTO <-> Entidad). Es un mapper basado en Source Generators (tiempo de compilación), lo que lo hace extremadamente rápido y libre de reflexión en tiempo de ejecución.
 - **MiddlewareExtensions**: Middleware personalizado (exception handling, etc.)
 - **MigrateDbContextExtensions**: Aplicación automática de migraciones
 
@@ -684,6 +712,7 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 - Formato de fecha: `M/d/yyyy hh:mm:ss tt`
 
 **Razón**: Cumple con el requerimiento específico del desafío técnico manteniendo la lógica en el dominio.
+**Nota**: Cuando se registra una progresión (`RegisterProgression`), el sistema invoca automáticamente `PrintItems()` para mostrar en la consola el estado actualizado de la lista y sus barras de progreso.
 
 ### 7. ¿Por qué Microservicios en lugar de un Monolito?
 
@@ -720,6 +749,27 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 - **Foco en el Dominio**: Permite concentrar el esfuerzo en reglas de negocio complejas (progresiones, fechas) en lugar de CRUDs básicos.
 - **Validación Fuerte**: Las categorías son conocidas en tiempo de compilación y validadas estrictamente por el dominio.
 - **Extensibilidad**: Preparado para migrar a base de datos en el futuro sin cambiar la interfaz pública del repositorio.
+
+---
+
+### 9. Agrupación de Servicios (TodoManagementServices)
+
+**Decisión**: Uso del patrón "Parameter Object" para agrupar servicios comunes (`IMediator`, `ITodoListQueries`, `TodoListMapper`) en una clase `TodoManagementServices`.
+
+**Razón**: 
+- Reduce la complejidad de los constructores y firmas de métodos en la API.
+- Facilita la inyección de dependencias transversales en todos los endpoints sin modificar su firma individualmente (pseudo-herencia de servicios).
+- Mantiene el código de los endpoints limpio y centrado en la lógica de request/response.
+
+### 10. Estrategia de Identificadores (GUID vs ItemId)
+
+**Decisión**: Uso dual de identificadores para satisfacer tanto necesidades técnicas como de negocio.
+
+- **Id (GUID)**: Identificador único del sistema (Primary Key). Generado automáticamente por la entidad base (`Entity`). Cumple con las recomendaciones de DDD para identidad global única.
+- **ItemId (int)**: Identificador de negocio legible y secuencial.
+
+**Estado Actual**:
+- El `ItemId` actúa como un **contador global** único para todos los items del sistema (`_repository.GetNextId()`).
 
 ---
 
@@ -773,10 +823,35 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 - Claridad en la intención del código
 - Mejor rendimiento en validaciones (usando `AsNoTracking`)
 
-### 5. Otras Mejoras Futuras
+### 5. Entidad Usuario y Multi-tenancy
 
-- **Caché**: Implementar caché para operaciones de lectura frecuentes
-- **Event Sourcing**: Considerar Event Sourcing para auditoría completa del historial de cambios
+Actualmente el sistema opera en un contexto global. Una evolución natural sería:
+- Introducir la entidad `Usuario` como Aggregate Root.
+- Vincular cada `TodoList` a un usuario específico.
+- Esto permitiría que cada usuario gestione sus propias listas de forma aislada.
+
+### 6. APIs y Repositorios Genéricos
+
+Dado que Command y Query Repositories comparten patrones base:
+- Se podrían implementar **APIs Genéricas** que expongan operaciones CRUD estándar para cualquier entidad.
+- Los parámetros de entrada para Queries podrían refactorizarse para aceptar **Objetos JSON** complejos en lugar de múltiples parámetros de query string, permitiendo filtros dinámicos y flexibles.
+
+### 7. ItemId como Contador por TodoList
+
+Para mejorar la experiencia de usuario:
+- Refactorizar la generación de `ItemId` para que sea un contador **local** por cada `TodoList` (ej: Lista A tiene items 1, 2, 3; Lista B tiene items 1, 2).
+- *Nota*: Esto requeriría gestionar la concurrencia a nivel de lista en la creación de items.
+
+### 8. Actualizaciones en Tiempo Real (SignalR)
+
+Para una experiencia de usuario moderna y reactiva:
+- Implementar **SignalR** para comunicación bidireccional.
+- **Caso de Uso**: Cuando un `TodoItem` se marca como completado o su progreso cambia, se envía un evento de integración. Un servicio consumidor notifica vía SignalR al frontend para actualizar la barra de progreso y el estado "Completado" en tiempo real sin recargar la página.
+
+### 9. Otras Mejoras Futuras
+
+- **Caché**: Implementar caché distribuida (Redis) para operaciones de lectura frecuentes.
+- **Event Sourcing**: Considerar Event Sourcing para auditoría completa y reconstrucción de estados históricos.
 
 ---
 
