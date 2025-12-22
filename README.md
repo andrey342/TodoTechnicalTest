@@ -546,7 +546,7 @@ El sistema está completamente containerizado y se compone de los siguientes ser
 
 6. **TodoManagement API** (`todomanagement.api`)
    - Construido desde `src/Microservices/TodoManagement/TodoManagement.API/Dockerfile`
-   - Puerto desarrollo: `32711` (configurado en override)
+   - Puerto desarrollo: `32701` (configurado en override)
    - Dependencias: SQL Server, Kafka, API Gateway
    - Health check para verificar el estado del servicio
    - Política de reinicio: `unless-stopped`
@@ -573,7 +573,7 @@ Archivo de override específico para desarrollo que modifica la configuración b
 
 **Configuraciones de desarrollo**:
 - **Kafka UI**: Expone el puerto `8089` para acceso desde el host
-- **TodoManagement API**: Expone el puerto `32711` para acceso directo al servicio, incluyendo:
+- **TodoManagement API**: Expone el puerto `32701` para acceso directo al servicio, incluyendo:
   - CAP Dashboard (disponible en desarrollo)
   - Endpoints de debugging
   - Swagger UI
