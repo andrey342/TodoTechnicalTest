@@ -23,7 +23,8 @@ public static class CategoryMaster
         "Documentation",
         "Testing",
         "DevOps",
-        "Research"
+        "Research",
+        "Work",
     }.AsReadOnly();
 
     /// <summary>

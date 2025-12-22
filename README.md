@@ -69,7 +69,6 @@ El sistema implementa el patrón de agregados de DDD:
 - **Responsabilidad**: Actúa como raíz del agregado y punto de entrada único para todas las operaciones sobre TodoItems
 - **Invariantes**: 
   - Gestiona la colección de TodoItems
-  - Gestiona la colección de TodoItems
   - Implementa `ITodoList` para exponer operaciones de negocio
 
 #### **TodoItem (Entity)**
@@ -196,6 +195,20 @@ if (!item.CanBeModified())
 ```csharp
 public bool IsCompleted => GetTotalProgress() >= 100m;
 ```
+
+### 5. Validación de Categoría
+
+**Regla**: Solo se permiten categorías predefinidas en el sistema (Master Data).
+
+**Implementación**:
+```csharp
+if (!Masters.CategoryMaster.IsValidCategory(category))
+{
+    throw new ArgumentException($"Category '{category}' is invalid...");
+}
+```
+
+**Razón**: Estandariza la categorización de tareas y evita datos inconsistentes o errores de escritura.
 
 ---
 
@@ -699,6 +712,14 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 
 **Aclaración Importante**: 
 Reconozco que para este desafío técnico específico, un monolito sería completamente válido y más simple de implementar. Sin embargo, dado que el objetivo es demostrar capacidad técnica y maestría, he elegido mostrar mi expertise en arquitecturas más complejas y modernas. Además, este es un trabajo que me recompensa y me motiva: mejorar y perfeccionar mis microservicios a lo largo de mi carrera es algo que disfruto profundamente. Los microservicios no son siempre la solución correcta, pero en este contexto me permiten demostrar un conjunto más amplio de habilidades técnicas y de arquitectura, mientras continúo refinando mi conocimiento y experiencia en este campo que tanto me apasiona.
+
+### 8. Categorías Estáticas (CategoryMaster)
+
+**Decisión**: Uso de una lista estática en código (`CategoryMaster`) en lugar de una tabla en base de datos.
+**Razón**:
+- **Foco en el Dominio**: Permite concentrar el esfuerzo en reglas de negocio complejas (progresiones, fechas) en lugar de CRUDs básicos.
+- **Validación Fuerte**: Las categorías son conocidas en tiempo de compilación y validadas estrictamente por el dominio.
+- **Extensibilidad**: Preparado para migrar a base de datos en el futuro sin cambiar la interfaz pública del repositorio.
 
 ---
 

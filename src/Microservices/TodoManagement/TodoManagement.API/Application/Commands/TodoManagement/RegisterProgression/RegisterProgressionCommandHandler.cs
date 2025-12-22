@@ -31,6 +31,9 @@ public class RegisterProgressionCommandHandler : ICommandHandler<RegisterProgres
 
         await _repository.UpdateAsync(todoList, cancellationToken);
 
+        // PrintItems in the console for show progressions
+        todoList.PrintItems();
+
         return progression.Id.ToString();
     }
 }

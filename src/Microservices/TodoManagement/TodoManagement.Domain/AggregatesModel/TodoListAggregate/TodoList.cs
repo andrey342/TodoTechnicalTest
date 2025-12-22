@@ -101,8 +101,11 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
                 var progressBar = GenerateProgressBar(accumulatedProgress);
                 
                 // Format: {ActionDate} - {AccumulatedProgress}%     |{ProgressBar}|
-                // Date format: M/d/yyyy hh:mm:ss tt (without leading zeros in day/month)
-                Console.WriteLine($"{progression.ActionDate:M/d/yyyy hh:mm:ss tt} - {accumulatedProgress}%     |{progressBar}|");
+                string dateStr = progression.ActionDate.ToString("M/d/yyyy hh:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
+                string percentStr = $"{accumulatedProgress}%";
+                
+                // Format: {Date} - {Percent}     |{ProgressBar}|
+                Console.WriteLine($"{dateStr} - {percentStr,-7}     |{progressBar}|");
             }
         }
     }
