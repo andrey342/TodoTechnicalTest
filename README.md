@@ -799,6 +799,43 @@ El código está diseñado para ser mantenible, escalable y seguir las mejores p
 
 ---
 
+## Testing
+
+El proyecto cuenta con una suite de tests automatizados que cubren tanto la lógica del dominio como la capa de aplicación.
+
+### Estructura de Tests
+
+1.  **TodoManagement.Domain.UnitTests**:
+    *   **Enfoque**: Validar las reglas de negocio, invariantes y comportamiento de las entidades y agregados.
+    *   **Cobertura**:
+        *   Progresiones (fechas secuenciales, porcentajes válidos).
+        *   Restricciones de modificación (no editar si progreso > 50%).
+        *   Cálculo de `IsCompleted`.
+        *   Formato de salida de `PrintItems`.
+    *   **Tecnologías**: xUnit, FluentAssertions, Moq.
+
+2.  **TodoManagement.API.UnitTests**:
+    *   **Enfoque**: Validar los Comandos y Validadores de la capa de aplicación.
+    *   **Cobertura**:
+        *   Handlers de comandos (Create, Add, Update, Remove, RegisterProgression).
+        *   Validadores FluentValidation (reglas de negocio, unicidad, existencia).
+        *   Comprobación de Idempotencia.
+    *   **Tecnologías**: xUnit, FluentAssertions, Moq, FluentValidation.TestHelper.
+
+### Cómo Ejecutar los Tests
+
+Para ejecutar un proyecto específico:
+
+```bash
+# Tests de Dominio
+dotnet test src/Microservices/TodoManagement/TodoManagement.Domain.UnitTests
+
+# Tests de API
+dotnet test src/Microservices/TodoManagement/TodoManagement.API.UnitTests
+```
+
+---
+
 ## Autor
 
 Desarrollado como parte del desafío técnico para demostrar habilidades en arquitectura de software, DDD y desarrollo .NET empresarial.
