@@ -714,7 +714,64 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 **Razón**: Cumple con el requerimiento específico del desafío técnico manteniendo la lógica en el dominio.
 **Nota**: Cuando se registra una progresión (`RegisterProgression`), el sistema invoca automáticamente `PrintItems()` para mostrar en la consola el estado actualizado de la lista y sus barras de progreso.
 
-### 7. ¿Por qué Microservicios en lugar de un Monolito?
+### 7. Generación de Archivo de PrintItems (Domain Events)
+
+**Desafío**: El método `PrintItems()` de la interfaz `ITodoList` retorna `void` y las reglas de la prueba técnica prohíben modificar la interfaz. Sin embargo, se requiere una API que genere un archivo con el contenido de `PrintItems` y lo envíe mediante un evento de integración.
+
+**Solución Elegida: Domain Events**
+
+En lugar de duplicar la lógica de formateo en la capa de aplicación o usar técnicas como `Console.SetOut()`, se optó por una solución basada en **Domain Events** que respeta los principios de DDD:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           FLUJO DE EJECUCIÓN                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. API recibe POST /todoList/printItemsFile                                │
+│     │                                                                       │
+│     ▼                                                                       │
+│  2. GenerateTodoListReportCommandHandler                                    │
+│     │  - Obtiene TodoList del repositorio                                   │
+│     │  - Llama a todoList.PrintItems()                                      │
+│     │                                                                       │
+│     ▼                                                                       │
+│  3. TodoList.PrintItems()                                                   │
+│     │  - Genera el contenido con StringBuilder                              │
+│     │  - Imprime a Console (comportamiento original)                        │
+│     │  - AddDomainEvent(new ItemsPrintedDomainEvent(...))                   │
+│     │                                                                       │
+│     ▼                                                                       │
+│  4. Handler llama a SaveEntitiesAsync()                                     │
+│     │                                                                       │
+│     ▼                                                                       │
+│  5. TodoManagementContext.DispatchDomainEventsAsync()                       │
+│     │  - Mediator.Publish(ItemsPrintedDomainEvent)                          │
+│     │                                                                       │
+│     ▼                                                                       │
+│  6. ItemsPrintedDomainEventHandler                                          │
+│     │  - Crea TodoListReportGeneratedIntegrationEvent                       │
+│     │  - _eventBus.PublishAsync(integrationEvent)                           │
+│     │                                                                       │
+│     ▼                                                                       │
+│  7. API retorna 200 OK                                                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Archivos Involucrados**:
+- `ItemsPrintedDomainEvent.cs` (Domain): Evento de dominio que contiene el contenido generado
+- `TodoList.PrintItems()` (Domain): Modificado para generar contenido y emitir el evento
+- `ItemsPrintedDomainEventHandler.cs` (API): Handler que convierte el Domain Event en Integration Event
+- `GenerateTodoListReportCommandHandler.cs` (API): Handler simplificado que solo llama a `PrintItems()` y guarda
+
+**Por qué Domain Events**:
+1. **No modifica la interfaz `ITodoList`**: La firma sigue siendo `void PrintItems()`
+2. **No duplica código**: La lógica de formateo está solo en el dominio
+3. **Sincronización automática**: Si `PrintItems` cambia, el archivo generado también
+4. **Sigue principios DDD**: Los eventos de dominio son la forma correcta de comunicar efectos secundarios
+5. **Transaccionalidad**: El evento se publica dentro de la misma transacción (garantizado por CAP)
+
+### 8. ¿Por qué Microservicios en lugar de un Monolito?
 
 **Razón**: Aunque este proyecto técnicamente podría implementarse perfectamente como un monolito, he elegido la arquitectura de microservicios por varias razones estratégicas y personales.
 
@@ -742,7 +799,7 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 **Aclaración Importante**: 
 Reconozco que para este desafío técnico específico, un monolito sería completamente válido y más simple de implementar. Sin embargo, dado que el objetivo es demostrar capacidad técnica y maestría, he elegido mostrar mi expertise en arquitecturas más complejas y modernas. Además, este es un trabajo que me recompensa y me motiva: mejorar y perfeccionar mis microservicios a lo largo de mi carrera es algo que disfruto profundamente. Los microservicios no son siempre la solución correcta, pero en este contexto me permiten demostrar un conjunto más amplio de habilidades técnicas y de arquitectura, mientras continúo refinando mi conocimiento y experiencia en este campo que tanto me apasiona.
 
-### 8. Categorías Estáticas (CategoryMaster)
+### 9. Categorías Estáticas (CategoryMaster)
 
 **Decisión**: Uso de una lista estática en código (`CategoryMaster`) en lugar de una tabla en base de datos.
 **Razón**:
@@ -752,7 +809,7 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 
 ---
 
-### 9. Agrupación de Servicios (TodoManagementServices)
+### 10. Agrupación de Servicios (TodoManagementServices)
 
 **Decisión**: Uso del patrón "Parameter Object" para agrupar servicios comunes (`IMediator`, `ITodoListQueries`, `TodoListMapper`) en una clase `TodoManagementServices`.
 
@@ -761,7 +818,7 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 - Facilita la inyección de dependencias transversales en todos los endpoints sin modificar su firma individualmente (pseudo-herencia de servicios).
 - Mantiene el código de los endpoints limpio y centrado en la lógica de request/response.
 
-### 10. Estrategia de Identificadores (GUID vs ItemId)
+### 11. Estrategia de Identificadores (GUID vs ItemId)
 
 **Decisión**: Uso dual de identificadores para satisfacer tanto necesidades técnicas como de negocio.
 

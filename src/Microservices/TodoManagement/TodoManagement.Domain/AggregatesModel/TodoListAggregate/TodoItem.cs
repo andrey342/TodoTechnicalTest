@@ -50,30 +50,9 @@ public class TodoItem : Entity
         Description = description;
         Category = category;
     }
-
-    internal void UpdateTodoListId(Guid todolistid)
-    {
-        TodoListId = todolistid;
-    }
-
-    internal void UpdateItemId(int itemid)
-    {
-        ItemId = itemid;
-    }
-
-    internal void UpdateTitle(string title)
-    {
-        Title = title;
-    }
-
     internal void UpdateDescription(string description)
     {
         Description = description;
-    }
-
-    internal void UpdateCategory(string category)
-    {
-        Category = category;
     }
 
     /// <summary>
@@ -106,17 +85,6 @@ public class TodoItem : Entity
     internal IReadOnlyCollection<Progression> GetOrderedProgressions()
     {
         return _progressions.OrderBy(p => p.ActionDate).ToList().AsReadOnly();
-    }
-
-    /// <summary>
-    /// Gets the accumulated progress percentage up to a specific date.
-    /// </summary>
-    internal decimal GetAccumulatedProgressUpTo(DateTime date)
-    {
-        return _progressions
-            .Where(p => p.ActionDate <= date)
-            .OrderBy(p => p.ActionDate)
-            .Sum(p => p.Percent);
     }
 
     #region Domain rules

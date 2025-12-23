@@ -29,6 +29,9 @@ public static class TodoManagementApi
         api.MapPost("/todoList/item/progression", RegisterProgression)
             .WithMetadata(new IncludeInGatewayAttribute());
 
+        api.MapPost("/todoList/printItemsFile", GenerateTodoListReport)
+            .WithMetadata(new IncludeInGatewayAttribute());
+
         // Queries
         api.MapGet("/todoList/{id:guid}", GetTodoListById)
             .WithMetadata(new IncludeInGatewayAttribute());
@@ -96,6 +99,18 @@ public static class TodoManagementApi
         var res = await services.Mediator.Send(command);
 
         return TypedResults.Ok(res);
+    }
+
+    private static async Task<Results<Ok, NotFound>> GenerateTodoListReport(
+        [FromBody] GenerateTodoListReportCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var success = await services.Mediator.Send(command);
+
+        if (!success)
+            return TypedResults.NotFound();
+
+        return TypedResults.Ok();
     }
 
     #endregion

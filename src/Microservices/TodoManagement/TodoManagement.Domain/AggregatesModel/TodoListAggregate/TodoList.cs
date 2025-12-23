@@ -74,19 +74,24 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
     /// <inheritdoc/>
     public void PrintItems()
     {
+        var sb = new StringBuilder();
         var orderedItems = _items.OrderBy(item => item.ItemId).ToList();
 
         foreach (var item in orderedItems)
         {
-            PrintItem(item);
+            PrintItem(item, sb);
         }
+
+        // Raise domain event with the generated content
+        AddDomainEvent(new ItemsPrintedDomainEvent(Id, Name, sb.ToString()));
     }
 
-    private void PrintItem(TodoItem item)
+    internal void PrintItem(TodoItem item, StringBuilder sb)
     {
         // Format: {ItemId}) {Title} - {Description} ({Category}) Completed:{IsCompleted}
-        Console.Write($"{item.ItemId}) {item.Title} - {item.Description} ({item.Category}) Completed:{item.IsCompleted}");
-        Console.WriteLine();
+        var itemLine = $"{item.ItemId}) {item.Title} - {item.Description} ({item.Category}) Completed:{item.IsCompleted}";
+        Console.WriteLine(itemLine);
+        sb.AppendLine(itemLine);
 
         // Get progressions ordered by date
         var orderedProgressions = item.GetOrderedProgressions().ToList();
@@ -105,12 +110,14 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
                 string percentStr = $"{accumulatedProgress}%";
                 
                 // Format: {Date} - {Percent}     |{ProgressBar}|
-                Console.WriteLine($"{dateStr} - {percentStr,-7}     |{progressBar}|");
+                var progressLine = $"{dateStr} - {percentStr,-7}     |{progressBar}|";
+                Console.WriteLine(progressLine);
+                sb.AppendLine(progressLine);
             }
         }
     }
 
-    private string GenerateProgressBar(decimal percentage)
+    internal static string GenerateProgressBar(decimal percentage)
     {
         const int barLength = 50;
         var filledLength = (int)Math.Round(percentage / 100m * barLength);

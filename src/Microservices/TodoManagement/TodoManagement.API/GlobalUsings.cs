@@ -51,3 +51,7 @@ global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoIt
 global using TodoManagement.API.Application.Commands.TodoManagement.RegisterProgression;
 global using TodoManagement.Domain.AggregatesModel.TodoListAggregate.Masters;
 global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoList;
+global using TodoManagement.API.Application.Commands.TodoManagement.GenerateTodoListReport;
+global using System.Text;
+global using Contracts.Events.TodoManagement;
+global using TodoManagement.Domain.Events;

@@ -47,7 +47,7 @@ internal static class DependencyInjectionExtensions
         services.AddMediator(options =>
         {
             options.ServiceLifetime = ServiceLifetime.Scoped;
-            options.Assemblies = [typeof(Program).Assembly];
+            options.Assemblies = [typeof(Program).Assembly, typeof(Entity).Assembly];
 
             // Register Mediator pipeline behaviors in the correct order (outer to inner).
             // LoggingBehavior is the outermost, followed by ValidationBehavior, IdempotencyBehavior, then TransactionBehavior.

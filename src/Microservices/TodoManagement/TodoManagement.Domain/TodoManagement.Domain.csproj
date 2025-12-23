@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <Folder Include="AggregatesModel\" />
-    <Folder Include="Events\" />
     <Folder Include="ValueObjects\" />
   </ItemGroup>
 </Project>
