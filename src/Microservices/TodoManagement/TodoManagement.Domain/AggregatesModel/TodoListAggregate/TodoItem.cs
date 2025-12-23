@@ -137,7 +137,7 @@ public class TodoItem : Entity
             if (actionDate <= lastProgression.ActionDate)
             {
                 throw new ArgumentException(
-                    $"The new progression date ({actionDate:yyyy-MM-dd}) must be later than the last progression date ({lastProgression.ActionDate:yyyy-MM-dd}).",
+                    $"The new progression date ({actionDate:yyyy-MM-dd HH:mm}) must be later than the last progression date ({lastProgression.ActionDate:yyyy-MM-dd HH:mm}).",
                     nameof(actionDate));
             }
         }

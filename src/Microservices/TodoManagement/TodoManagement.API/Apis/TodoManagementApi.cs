@@ -111,7 +111,7 @@ public static class TodoManagementApi
             todoList = await services.TodoListQueries.FirstOrDefaultAsync(
                 filter: tl => tl.Id == id,
                 includes: query => query.Include(tl => tl.Items)
-                                        .ThenInclude(i => i.Progressions),
+                                        .ThenInclude(i => i.Progressions.OrderByDescending(p => p.ActionDate)),
                 cancellationToken);
         }
         else
@@ -150,7 +150,7 @@ public static class TodoManagementApi
         var todoLists = await services.TodoListQueries.GetAllAsync(
             filter: filter,
             includes: includeItems ? query => query.Include(tl => tl.Items)
-                                                   .ThenInclude(i => i.Progressions) : null,
+                                                   .ThenInclude(i => i.Progressions.OrderByDescending(p => p.ActionDate)) : null,
             cancellationToken);
 
         var viewModels = todoLists.Select(services.Mapper.ToViewModel).ToList();
