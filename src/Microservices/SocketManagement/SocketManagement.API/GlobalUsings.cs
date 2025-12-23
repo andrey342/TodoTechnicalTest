@@ -1,0 +1,30 @@
+// This file defines global using directives for commonly used namespaces across the API layer,
+// simplifying code files by eliminating repetitive using statements.
+global using Mediator;
+global using FluentValidation;
+global using Microsoft.AspNetCore.Mvc;
+global using System.Diagnostics;
+global using System.Text.Json;
+global using System.Net;
+global using System.Linq.Expressions;
+global using SocketManagement.API.Application.Common.Exceptions;
+global using SocketManagement.API.Extensions;
+global using SocketManagement.API.Application.Behaviors;
+global using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+global using Confluent.Kafka;
+global using Microsoft.Extensions.Diagnostics.HealthChecks;
+global using Microsoft.OpenApi.Any;
+global using Microsoft.OpenApi.Models;
+global using SocketManagement.API.Apis.Common.Attributes;
+global using Swashbuckle.AspNetCore.SwaggerGen;
+global using SocketManagement.API.Apis.Common.Swagger;
+global using SocketManagement.API.Infrastructure.Services;
+global using SocketManagement.API.Apis.Common.Gateways;
+global using EventBus.Abstractions;
+global using EventBus.Cap;
+global using Contracts.Events;
+global using Microsoft.AspNetCore.SignalR;
+global using Contracts.Events.TodoManagement;
+global using DotNetCore.CAP;
+global using SocketManagement.API.Application.Hubs;
+global using SocketManagement.API.Application.IntegrationEvents;

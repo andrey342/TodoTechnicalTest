@@ -5,7 +5,8 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "todomanagement.api": "StartDebugging",
-        "apigateway.ag": "StartDebugging"
+        "apigateway.ag": "StartDebugging",
+        "socketmanagement.api": "StartDebugging",
       }
     }
   }

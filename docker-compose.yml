@@ -81,7 +81,6 @@ services:
       timeout: 5s
       retries: 5
       
-
   todomanagement.api:
     container_name: todomanagement.api
     image: ${DOCKER_REGISTRY-}todomanagementapi
@@ -105,6 +104,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped 
+
+  socketmanagement.api:
+    container_name: socketmanagement.api
+    image: ${DOCKER_REGISTRY-}socketmanagementapi
+    build:
+      context: .
+      dockerfile: src/Microservices/SocketManagement/SocketManagement.API/Dockerfile
+    depends_on:
+      - kafka
+      - apigateway.ag
+    networks:
+      - todotechnicaltest_backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Cap__Kafka__Servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      MS__Name: ${MS_SOCKETMANAGEMENT_NAME}
+      MS__BaseUrl: ${MS_SOCKETMANAGEMENT_BASEURL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped 
 
 networks:

@@ -5,3 +5,6 @@ services:
   todomanagement.api:
     ports:
       - "32701:8080"   # Development only: CAP dashboard, debugging, etc.
+  socketmanagement.api:
+    ports:
+      - "32702:8080"   # Development only: CAP dashboard, debugging, etc.

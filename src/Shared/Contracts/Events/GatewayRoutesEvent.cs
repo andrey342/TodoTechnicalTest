@@ -16,6 +16,6 @@ public record GatewayRoutesEvent(
     string Service,
     string Version,
     string BaseAddress,
-    string SwaggerFragmentJson,
-    IReadOnlyList<GatewayRouteDto> Routes)
+    IReadOnlyList<GatewayRouteDto> Routes,
+    string? SwaggerFragmentJson = null)
     : IntegrationEvent;

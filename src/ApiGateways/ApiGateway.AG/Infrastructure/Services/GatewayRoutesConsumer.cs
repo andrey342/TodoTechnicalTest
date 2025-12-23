@@ -49,8 +49,11 @@ public sealed class GatewayRoutesConsumer : ICapSubscribe
         _log.LogInformation("Applying routes for {Service}", evt.Service);
 
         _routes.Upsert(evt);
-        var reader = new OpenApiStringReader();
-        _swagger.Upsert(evt.Service, reader.Read(evt.SwaggerFragmentJson, out _));
+        if (!string.IsNullOrWhiteSpace(evt.SwaggerFragmentJson))
+        {
+            var reader = new OpenApiStringReader();
+            _swagger.Upsert(evt.Service, reader.Read(evt.SwaggerFragmentJson, out _));
+        }
 
         _provider.Rebuild();
     }
