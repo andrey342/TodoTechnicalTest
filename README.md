@@ -41,12 +41,14 @@ El sistema está organizado en una arquitectura de microservicios con los siguie
 TodoTechnicalTest/
 ├── src/
 │   ├── Microservices/
-│   │   └── TodoManagement/
-│   │       ├── TodoManagement.API/          # Capa de aplicación y API
-│   │       ├── TodoManagement.Domain/        # Dominio y lógica de negocio
-│   │       └── TodoManagement.Infrastructure/ # Persistencia y acceso a datos
+│   │   ├── TodoManagement/
+│   │   │   ├── TodoManagement.API/          # Aplicación y API de Tareas
+│   │   │   ├── TodoManagement.Domain/       # Dominio y lógica de negocio
+│   │   │   └── TodoManagement.Infrastructure/ # Persistencia y acceso a datos
+│   │   └── SocketManagement/
+│   │       └── SocketManagement.API/       # Microservicio para SignalR y Tiempo Real
 │   ├── ApiGateways/
-│   │   └── ApiGateway.AG/                   # API Gateway con YARP
+│   │   └── ApiGateway.AG/                   # API Gateway con YARP (Único punto de entrada)
 │   └── Shared/
 │       ├── Contracts/                        # Contratos compartidos
 │       └── EventBus/                         # Event Bus con CAP
@@ -465,6 +467,18 @@ Se utiliza el atributo `IncludeInGatewayAttribute` para controlar granularmente 
 - Se puede restringir a un gateway específico (ej: `targets: [ApiGateway]`) como se ha hecho en algunas APIs de ejemplo.
 - Permite decidir endpoint por endpoint qué se expone y dónde.
 
+### Rationale: ¿Por qué un API Gateway (AG) y no exponer cada Microservicio?
+
+En este sistema, el **API Gateway (AG)** actúa como el único punto de entrada hacia la red interna de microservicios.
+
+**Ventajas Técnicas y de Seguridad**:
+1.  **Swagger Unificado y NSWAG**: El AG agrupa todos los Swaggers de los microservicios en un único endpoint. Esto permite que el Frontend utilice la librería **NSWAG** para generar automáticamente el `api-client` completo sin tener que gestionar múltiples URLs.
+2.  **Seguridad de Red**: Solo el AG es accesible desde el exterior. En un entorno real, los microservicios no tendrían puertos públicos, reduciendo drásticamente la superficie de ataque. 
+    > [!NOTE]
+    > En este proyecto de desarrollo, se han asignado puertos a los microservicios para facilitar las pruebas, pero en producción estos estarían aislados.
+3.  **Simplificación de Mantenimiento**: Centralizamos la configuración de **CORS**, autenticación, rate limiting y logging en un solo sitio, evitando la repetición de código y lógica en cada microservicio.
+4.  **Abstracción de Rutas**: El front-end solo conoce la URL del AG. El redireccionamiento interno mediante YARP permite mover o escalar microservicios sin que el cliente tenga que cambiar su configuración.
+
 **Seguridad**:
 El API Gateway tiene implementada autenticación JWT, pero **se encuentra desactivada en entorno de Desarrollo** para facilitar el debugging y las pruebas manuales sin necesidad de tokens.
 
@@ -510,7 +524,7 @@ El sistema utiliza extensiones para mantener el `Program.cs` limpio y organizado
 
 **Registra**:
 1. **DbContext**: Configuración de Entity Framework con SQL Server
-2. **Migraciones**: Extensión para aplicar migraciones automáticamente
+2. **Migraciones**: Extensión para aplicar migraciones automáticamente (ver sección inferior)
 3. **CAP**: Configuración del event bus
 4. **Repositorios**: Registro automático usando Scrutor
 5. **Mediator**: Configuración con behaviours
@@ -520,14 +534,23 @@ El sistema utiliza extensiones para mantener el `Program.cs` limpio y organizado
 
 **Ventaja**: Separación de responsabilidades y código más mantenible.
 
-### Otras Extensiones
+### Manejo Automático de Migraciones
 
-- **SwaggerExtensions**: Configuración de Swagger/OpenAPI
-- **HealthChecksExtensions**: Health checks para SQL Server y Kafka
-- **ProblemDetailsExtensions**: Manejo estándar de errores HTTP
-- **Mapster/Mapperly**: Se utiliza **Mapperly** para el mapeo de objetos (DTO <-> Entidad). Es un mapper basado en Source Generators (tiempo de compilación), lo que lo hace extremadamente rápido y libre de reflexión en tiempo de ejecución.
-- **MiddlewareExtensions**: Middleware personalizado (exception handling, etc.)
-- **MigrateDbContextExtensions**: Aplicación automática de migraciones
+Se ha implementado una extensión personalizada `MigrateDbContextExtensions.cs` que automatiza el ciclo de vida de la base de datos:
+
+1.  **AddMigration<TContext>**: Registra un `BackgroundService` que se ejecuta al arrancar la aplicación.
+2.  **EnsureCreated / Migrate**: El servicio se encarga de verificar si la DB existe, crearla y aplicar las migraciones pendientes antes de que el microservicio empiece a recibir tráfico.
+3.  **Seeding**: Permite inyectar un `IDbSeeder` para poblar la base de datos con datos maestros iniciales de forma controlada.
+
+Esto garantiza que cualquier desarrollador pueda clonar el repo y ejecutar `docker-compose up` sin tener que ejecutar comandos manuales de Entity Framework.
+
+---
+
+## Configuración y Variables de Entorno
+
+> [!IMPORTANT]  
+> Se ha incluido el archivo `.env` en el repositorio **únicamente para facilitar la ejecución de esta prueba técnica**.  
+> En un proyecto real y profesional, el archivo `.env` **NUNCA** se subiría al control de versiones, sino que se gestionaría mediante secretos (Azure Key Vault, GitHub Secrets, etc.).
 
 ---
 
@@ -714,55 +737,62 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 **Razón**: Cumple con el requerimiento específico del desafío técnico manteniendo la lógica en el dominio.
 **Nota**: Cuando se registra una progresión (`RegisterProgression`), el sistema invoca automáticamente `PrintItems()` para mostrar en la consola el estado actualizado de la lista y sus barras de progreso.
 
-### 7. Generación de Archivo de PrintItems (Domain Events)
+### 7. Generación de Archivo de PrintItems
 
-**Desafío**: El método `PrintItems()` de la interfaz `ITodoList` retorna `void` y las reglas de la prueba técnica prohíben modificar la interfaz. Sin embargo, se requiere una API que genere un archivo con el contenido de `PrintItems` y lo envíe mediante un evento de integración.
+**Desafío**: El método `PrintItems()` de la interfaz `ITodoList` retorna `void` y se requiere una API que genere un archivo con el contenido de `PrintItems` y lo envíe mediante un evento de integración hasta el cliente final.
 
-**Solución Elegida: Domain Events**
-
-En lugar de duplicar la lógica de formateo en la capa de aplicación o usar técnicas como `Console.SetOut()`, se optó por una solución basada en **Domain Events** que respeta los principios de DDD:
+**Solución**: Se ha completado el flujo utilizando **Domain Events** y un microservicio de Notificaciones/WebSockets (`SocketManagement`).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           FLUJO DE EJECUCIÓN                                │
+│                           FLUJO DE EJECUCIÓN COMPLETO                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  1. API recibe POST /todoList/printItemsFile                                │
-│     │                                                                       │
 │     ▼                                                                       │
-│  2. GenerateTodoListReportCommandHandler                                    │
-│     │  - Obtiene TodoList del repositorio                                   │
-│     │  - Llama a todoList.PrintItems()                                      │
-│     │                                                                       │
+│  2. GenerateTodoListReportCommandHandler (TodoManagement.API)               │
+│     - Llama a todoList.PrintItems()                                         │
 │     ▼                                                                       │
-│  3. TodoList.PrintItems()                                                   │
-│     │  - Genera el contenido con StringBuilder                              │
-│     │  - Imprime a Console (comportamiento original)                        │
-│     │  - AddDomainEvent(new ItemsPrintedDomainEvent(...))                   │
-│     │                                                                       │
+│  3. TodoList.PrintItems() (Domain)                                          │
+│     - Genera contenido y emite ItemsPrintedDomainEvent                      │
 │     ▼                                                                       │
-│  4. Handler llama a SaveEntitiesAsync()                                     │
-│     │                                                                       │
+│  4. ItemsPrintedDomainEventHandler (TodoManagement.API)                     │
+│     - Publica TodoListReportGeneratedIntegrationEvent al Event Bus          │
 │     ▼                                                                       │
-│  5. TodoManagementContext.DispatchDomainEventsAsync()                       │
-│     │  - Mediator.Publish(ItemsPrintedDomainEvent)                          │
-│     │                                                                       │
+│  5. CAP (Event Bus) distribuye el evento                                    │
 │     ▼                                                                       │
-│  6. ItemsPrintedDomainEventHandler                                          │
-│     │  - Crea TodoListReportGeneratedIntegrationEvent                       │
-│     │  - _eventBus.PublishAsync(integrationEvent)                           │
-│     │                                                                       │
+│  6. TodoListReportConsumer (SocketManagement.API)                           │
+│     - Consume el evento de integración (Raw o Gzipped)                      │
 │     ▼                                                                       │
-│  7. API retorna 200 OK                                                      │
+│  7. SignalR Hub (PrintHub)                                                  │
+│     - Envía el contenido del archivo (Base64) a los clientes conectados     │
+│     ▼                                                                       │
+│  8. Frontend (Cliente)                                                      │
+│     - Recibe el evento "PrintItems" y muestra/descarga el reporte            │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Archivos Involucrados**:
-- `ItemsPrintedDomainEvent.cs` (Domain): Evento de dominio que contiene el contenido generado
-- `TodoList.PrintItems()` (Domain): Modificado para generar contenido y emitir el evento
-- `ItemsPrintedDomainEventHandler.cs` (API): Handler que convierte el Domain Event en Integration Event
-- `GenerateTodoListReportCommandHandler.cs` (API): Handler simplificado que solo llama a `PrintItems()` y guarda
+**Beneficios de este flujo**:
+1. **Desacoplamiento**: El microservicio de tareas no sabe nada de WebSockets.
+2. **Escalabilidad**: El manejo de miles de conexiones concurrentes recae sobre un MS especializado (`SocketManagement`).
+3. **Resiliencia**: Si el servicio de sockets está caído, CAP reintentará el envío cuando vuelva a estar online.
+
+---
+
+## SocketManagement Microservice
+
+Este microservicio se encarga de la comunicación en tiempo real con el exterior (Frontend) utilizando **SignalR**.
+
+### Responsabilidades
+- **Gestión de Conexiones**: Mantiene los sockets abiertos con los clientes.
+- **Consumo de Eventos**: Escucha eventos de integración del sistema que requieren notificación inmediata.
+- **Broadcasting**: Redirige la información de los eventos a los clientes de SignalR correspondientes.
+
+### Implementación Técnica
+- **SignalR Hubs**: Implementa `PrintHub` para notificaciones de reportes.
+- **Consumidores CAP**: Procesa eventos como `TodoListReportGeneratedIntegrationEvent`.
+- **Manejo de Payloads Grandes**: Capacidad para procesar eventos comprimidos (Gzip) cuando el reporte supera el tamaño estándar de mensaje de Kafka.
 
 **Por qué Domain Events**:
 1. **No modifica la interfaz `ITodoList`**: La firma sigue siendo `void PrintItems()`
