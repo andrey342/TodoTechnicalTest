@@ -14,6 +14,9 @@ public static class TodoManagementApi
                 targets: [ApiGateway] // If you want to specify targets, if not, the default is all targets
                 ));
 
+        api.MapDelete("/todoList", RemoveTodoList)
+            .WithMetadata(new IncludeInGatewayAttribute());
+
         api.MapPost("/todoList/item", AddTodoItem)
             .WithMetadata(new IncludeInGatewayAttribute());
 
@@ -43,6 +46,15 @@ public static class TodoManagementApi
 
     private static async Task<Ok<string>> CreateTodoList(
         CreateTodoListCommand command,
+        [AsParameters] TodoManagementServices services)
+    {
+        var res = await services.Mediator.Send(command);
+
+        return TypedResults.Ok(res);
+    }
+
+    private static async Task<Ok<string>> RemoveTodoList(
+        [FromBody] RemoveTodoListCommand command,
         [AsParameters] TodoManagementServices services)
     {
         var res = await services.Mediator.Send(command);

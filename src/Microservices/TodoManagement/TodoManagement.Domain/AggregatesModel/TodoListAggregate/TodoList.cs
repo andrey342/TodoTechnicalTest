@@ -122,6 +122,20 @@ public class TodoList : Entity, IAggregateRoot, ITodoList
         return filled + empty;
     }
 
+    /// <summary>
+    /// Validates if the TodoList can be deleted based on its items' state.
+    /// Throws InvalidOperationException if any item cannot be modified.
+    /// </summary>
+    public void ValidateCanBeDeleted()
+    {
+        var invalidItem = _items.FirstOrDefault(i => !i.CanBeModified());
+        if (invalidItem != null)
+        {
+            throw new InvalidOperationException(
+                $"Cannot delete TodoList because it contains an item '{invalidItem.Title}' (Id: {invalidItem.ItemId}) with progress > 50%.");
+        }
+    }
+
     #endregion
 
     #region Domain rules

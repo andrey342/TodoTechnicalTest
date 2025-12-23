@@ -13,3 +13,4 @@ global using TodoManagement.API.Application.Commands.TodoManagement.RegisterProg
 global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoItem;
 global using TodoManagement.API.Application.Commands.TodoManagement.UpdateTodoItem;
 global using TodoManagement.API.Application.Common.Idempotency;
+global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoList;

@@ -50,3 +50,4 @@ global using TodoManagement.API.Application.Commands.TodoManagement.UpdateTodoIt
 global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoItem;
 global using TodoManagement.API.Application.Commands.TodoManagement.RegisterProgression;
 global using TodoManagement.Domain.AggregatesModel.TodoListAggregate.Masters;
+global using TodoManagement.API.Application.Commands.TodoManagement.RemoveTodoList;
