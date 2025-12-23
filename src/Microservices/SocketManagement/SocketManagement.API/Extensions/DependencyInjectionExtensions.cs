@@ -34,7 +34,7 @@ internal static class DependencyInjectionExtensions
         services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
 
         // Register integration event consumers for CAP
-        services.AddSingleton<TodoListReportConsumer>();
+        services.AddTransient<TodoListReportConsumer>();
 
         // Register the GatewayRoutesPublisher for publishing routes to the event bus.
         services.AddHostedService<GatewayRoutesPublisher>();

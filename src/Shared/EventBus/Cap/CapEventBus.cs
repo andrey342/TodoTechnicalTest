@@ -79,8 +79,13 @@ public sealed class CapEventBus : IEventBus
     /// </summary>
     /// <typeparam name="T">The event type to generate a topic name for</typeparam>
     /// <returns>A formatted topic name in the format "integration.{eventname}"</returns>
-    private static string GetTopicName<T>() =>
-        $"integration.{typeof(T).Name.TrimEnd("Event".ToCharArray()).ToLowerInvariant()}";
+    private static string GetTopicName<T>()
+    {
+        var name = typeof(T).Name;
+        if (name.EndsWith("Event", StringComparison.OrdinalIgnoreCase))
+            name = name[..^5];
+        return $"integration.{name.ToLowerInvariant()}";
+    }
 
     #endregion
 }
