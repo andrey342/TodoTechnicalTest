@@ -17,11 +17,12 @@
 13. [Proyectos Shared y Utilidades](#proyectos-shared-y-utilidades)
 14. [Extensiones del Program.cs](#extensiones-del-programcs)
 15. [SocketManagement Microservicio](#socketmanagement-microservicio)
-16. [Configuración y Variables de Entorno](#configuración-y-variables-de-entorno)
-17. [Decisiones Técnicas](#decisiones-técnicas)
-18. [Posibles Mejoras y Consideraciones Futuras](#posibles-mejoras-y-consideraciones-futuras)
-19. [Conclusión](#conclusión)
-20. [Autor](#autor)
+16. [Estrategia de Testing](#estrategia-de-testing)
+17. [Configuración y Variables de Entorno](#configuración-y-variables-de-entorno)
+18. [Decisiones Técnicas](#decisiones-técnicas)
+19. [Posibles Mejoras y Consideraciones Futuras](#posibles-mejoras-y-consideraciones-futuras)
+20. [Conclusión](#conclusión)
+21. [Autor](#autor)
 
 ---
 
@@ -49,7 +50,7 @@ Esta sección está diseñada para poner en marcha el sistema desde cero en tu m
 
 ### Instalación y Compilación
 
-El proyecto utiliza **Docker Compose** para orquestar todos los servicios (Base de datos, Kafka, APIs, etc.). No necesitas instalar .NET SDK ni SQL Server localmente para ejecutar el sistema, ya que todo se ejecuta en contenedores aislados.
+El proyecto utiliza **Docker Compose** para orquestar todos los servicios (Base de datos, Kafka, APIs, etc.). No necesitas instalar .NET 9 SDK ni SQL Server localmente para ejecutar el sistema, ya que todo se ejecuta en contenedores aislados.
 
 1.  **Clonar el repositorio** (si tienes git instalado):
     ```bash
@@ -791,6 +792,41 @@ Este microservicio se encarga de la comunicación en tiempo real con el exterior
 
 ---
 
+## Estrategia de Testing
+
+El proyecto cuenta con una suite de pruebas robusta que garantiza la calidad y corrección del código tanto a nivel de dominio como de aplicación.
+
+### Tecnologías y Librerías
+
+Se utiliza el siguiente stack tecnológico para las pruebas:
+
+*   **xUnit**: Framework de pruebas unitarias principal.
+*   **FluentAssertions**: Librería para escribir aserciones fluidas y legibles (ej: `result.Should().BeTrue()`).
+*   **Moq**: Framework de mocking para aislar dependencias/interfaces en los tests.
+*   **Coverlet**: Herramienta para medir la cobertura de código.
+
+### Estructura de Pruebas
+
+#### 1. TodoManagement.Domain.UnitTests
+Este proyecto se centra en validar la **Lógica Pura del Dominio** sin dependencias externas.
+*   **Objetivo**: Asegurar que las reglas de negocio e invariantes se cumplan estrictamente.
+*   **Cobertura Principal**:
+    *   **Invariantes de Entidad**: Valida que no se pueda crear un estado inválido (ej. progresiones con fechas no secuenciales).
+    *   **Lógica de Negocio Compleja**:
+        *   Restricción de modificación (Update/Delete) si el progreso > 50%.
+        *   Cálculo automático de `IsCompleted`.
+        *   Validación de porcentajes acumulados (no exceder 100%).
+    *   **Ejemplo**: `TodoListTests.cs` verifica casos como añadir progresiones con fechas pasadas, porcentajes negativos, o intentar borrar tareas avanzadas.
+
+#### 2. TodoManagement.API.UnitTests
+Este proyecto valida la **Capa de Aplicación y API**.
+*   **Objetivo**: Asegurar que los flujos de entrada, validación y orquestación funcionen correctamente.
+*   **Cobertura Principal**:
+    *   **Validadores (FluentValidation)**: Tests específicos para asegurar que requests inválidos sean rechazados antes de procesar (ej. `CreateTodoItemCommandValidator`).
+    *   **Command Handlers**: Se utiliza **Moq** para simular repositorios y verificar que los handlers orquestan correctamente la lógica (llaman al repositorio, publican eventos, etc.).
+
+---
+
 ## Configuración y Variables de Entorno
 
 > [IMPORTANTE!]  
@@ -1017,7 +1053,16 @@ Actualmente el sistema opera en un contexto global. Una evolución natural serí
 - Vincular cada `TodoList` a un usuario específico.
 - Esto permitiría que cada usuario gestione sus propias listas de forma aislada.
 
-### 3. APIs y Repositorios Genéricos
+### 3. Microservicio de Identidad y Autenticación (Login)
+
+Implementar un microservicio dedicado (`Identity.API`) encargado exclusivamente de la autenticación.
+
+- **IdentityServer / Duende**: Implementar un Identity Provider (IdP) robusto que emita tokens JWT firmados.
+- **Centralización**: El Login no debe ser responsabilidad de cada microservicio. El `Identity.API` centraliza el login, registro, recuperación de contraseñas y gestión de usuarios.
+- **Integración con API Gateway**: El Gateway validará la firma de los tokens JWT antes de redirigir la petición a los microservicios (`TodoManagement`, `SocketManagement`).
+- **Seguridad**: Almacenamiento seguro de credenciales (hashing), gestión de scopes y claims.
+
+### 4. APIs y Repositorios Genéricos
 
 Dado que Command y Query Repositories comparten patrones base:
 - Se podrían implementar **APIs Genéricas** que expongan operaciones CRUD estándar para cualquier entidad.
@@ -1025,18 +1070,18 @@ Dado que Command y Query Repositories comparten patrones base:
 
 **Beneficio**: De esta manera cada entidad tienen sus propias APIs y repositorios genéricos automáticamente sin necesidad de repetir código.
 
-### 4. ItemId como Contador por TodoList
+### 5. ItemId como Contador por TodoList
 
 Para mejorar la experiencia de usuario:
 - Refactorizar la generación de `ItemId` para que sea un contador **local** por cada `TodoList` (ej: Lista A tiene items 1, 2, 3; Lista B tiene items 1, 2).
 
-### 5. Actualizaciones en Tiempo Real (SignalR)
+### 6. Actualizaciones en Tiempo Real (SignalR)
 
 Para una experiencia de usuario moderna y reactiva:
 - Implementar **SignalR** para comunicación bidireccional.
 - **Caso de Uso**: Cuando un `TodoItem` se marca como completado o su progreso cambia, se envía un evento de integración. Un servicio consumidor notifica vía SignalR al frontend para actualizar la barra de progreso y el estado "Completado" en tiempo real sin recargar la página o forzar un refresco de la lista.
 
-### 6. Otras Mejoras Futuras
+### 7. Otras Mejoras Futuras
 
 - **Caché**: Implementar caché distribuida (Redis) para operaciones de lectura frecuentes.
 - **Event Sourcing**: Considerar Event Sourcing para auditoría completa y reconstrucción de estados históricos.
@@ -1061,7 +1106,6 @@ Este proyecto demuestra un enfoque profesional y completo para el desarrollo de 
 El código está diseñado para ser mantenible, escalable y seguir las mejores prácticas de DDD.
 
 ---
-
 
 ## Autor
 

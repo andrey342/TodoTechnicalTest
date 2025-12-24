@@ -31,10 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Application/Common/Models\" />
     <Folder Include="Application/DomainEventHandlers\" />
-    <Folder Include="Application/IntegrationEvents\" />
-    <Folder Include="Application/Queries/Specifications\" />
   </ItemGroup>
 
   <ItemGroup>
