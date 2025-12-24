@@ -1,6 +1,6 @@
-# TodoTechnicalTest - Sistema de Gestión de Tareas para la prueba técnica de BEYOND HOSPITALITY
+# TodoTechnicalTest Backend - Sistema de Gestión de Tareas para la prueba técnica de BEYOND HOSPITALITY
 
-## 📋 Índice
+## Índice
 
 1. [Introducción](#introducción)
 2. [Guía de Inicio Rápido (Instalación)](#guía-de-inicio-rápido)
@@ -27,9 +27,9 @@
 ---
 
 ## Introducción
-Este proyecto implementa un sistema de gestión de tareas (Todo Management) siguiendo principios de **Domain-Driven Design (DDD)** y arquitectura de microservicios. El sistema está diseñado para ser escalable, mantenible y seguir las mejores prácticas de desarrollo de software.
+He implementado un sistema de gestión de tareas poniendo todo el cariño en los principios de **Domain-Driven Design (DDD)** y microservicios. Mi idea no fue solo "hacer que funcione", sino crear algo escalable, limpio y mantenible.
 
-### Objetivo del Desafío Técnico
+### Objetivo del Desafío
 
 El objetivo principal es demostrar maestría técnica en:
 - **Domain-Driven Design**: Modelado del dominio con agregados, entidades y value objects
@@ -50,7 +50,7 @@ Esta sección está diseñada para poner en marcha el sistema desde cero en tu m
 
 ### Instalación y Compilación
 
-El proyecto utiliza **Docker Compose** para orquestar todos los servicios (Base de datos, Kafka, APIs, etc.). No necesitas instalar .NET 9 SDK ni SQL Server localmente para ejecutar el sistema, ya que todo se ejecuta en contenedores aislados.
+He dockerizado absolutamente todo para que no tengas que instalar ni SQL Server ni SDKs (.NET 9) en tu máquina. Todo corre aislado y feliz en sus contenedores.
 
 1.  **Clonar el repositorio** (si tienes git instalado):
     ```bash
@@ -102,18 +102,18 @@ También puedes ejecutar las pruebas desde la interfaz de **Visual Studio**:
 
 Una vez que el sistema esté corriendo mediante Docker Compose, tendrás acceso a las siguientes herramientas y servicios:
 
-### 🌍 Puntos de Acceso Públicos (Simulado)
+### Puntos de Acceso Públicos (Simulado)
 
-*   **📘 API Gateway - Swagger Unificado**
+*   **API Gateway - Swagger Unificado**
     *   **URL**: [http://localhost:32700/swagger/index.html](http://localhost:32700/swagger/index.html)
     *   **Descripción**: Este es el **único punto de entrada** que debería usar una aplicación Frontend. Agrupa y expone las APIs de todos los microservicios subyacentes.
 
-*   **🕸️ Kafka UI**
+*   **Kafka UI**
     *   **URL**: [http://localhost:8089/](http://localhost:8089/)
     *   **Descripción**: Panel visual para administrar y monitorizar tu cluster de Kafka.
     *   **Qué ver**: Puedes ir a la sección "Topics" para ver los eventos de integración (ej: `integration.todomanagement.todoitemcreated`) y ver los mensajes en tiempo real.
 
-### 🔧 Puntos de Acceso Internos (Solo Desarrollo)
+### Puntos de Acceso Internos (Solo Desarrollo)
 
 Estas URLs acceden directamente a los microservicios, saltándose el API Gateway. Útiles para debugging y ver el estado interno de CAP.
 
@@ -131,7 +131,7 @@ Estas URLs acceden directamente a los microservicios, saltándose el API Gateway
 
 ## Docker y Containerización
 
-El proyecto utiliza **Docker Compose** para orquestar todos los servicios necesarios del sistema, facilitando el desarrollo y despliegue en diferentes entornos.
+Como comentaba, Docker Compose es el director de orquestra aquí. Gestiona todos los servicios del despliegue.
 
 ### Arquitectura de Contenedores
 
@@ -451,7 +451,7 @@ if (!Masters.CategoryMaster.IsValidCategory(category))
 
 ### Separación CQRS
 
-El sistema implementa **Command Query Responsibility Segregation (CQRS)**:
+He separado las lecturas de las escrituras usando **Command Query Responsibility Segregation (CQRS)**. ¿Por qué? Para poder escalar y optimizar cada lado independientemente y mantener el código ordenado.
 
 - **Command Repositories** (`ICommandRepository<T>`): Para operaciones de escritura
 - **Query Repositories** (`IQueryRepository<T>`): Para operaciones de lectura
@@ -1092,16 +1092,16 @@ Para una experiencia de usuario moderna y reactiva:
 
 Este proyecto demuestra un enfoque profesional y completo para el desarrollo de software. Es el trabajo de años de experiencia con Microservicios y mejoras constantes de mis conocimientos, implementando:
 
-✅ **Domain-Driven Design** con agregados bien definidos  
-✅ **Arquitectura de Microservicios** escalable  
-✅ **CQRS** para separación de responsabilidades  
-✅ **Event-Driven Architecture** con CAP y Kafka  
-✅ **API Gateway** dinámico con Swagger unificado  
-✅ **Behaviours** para cross-cutting concerns  
-✅ **Reglas de Negocio** robustas y validadas  
-✅ **Domain Events** con dispatch automático  
-✅ **Unit of Work** para gestión transaccional  
-✅ **Separación de Interfaces** por responsabilidad (Command/Query/Validation)  
+- **Domain-Driven Design** con agregados bien definidos  
+- **Arquitectura de Microservicios** escalable  
+- **CQRS** para separación de responsabilidades  
+- **Event-Driven Architecture** con CAP y Kafka  
+- **API Gateway** dinámico con Swagger unificado  
+- **Behaviours** para cross-cutting concerns  
+- **Reglas de Negocio** robustas y validadas  
+- **Domain Events** con dispatch automático  
+- **Unit of Work** para gestión transaccional  
+- **Separación de Interfaces** por responsabilidad (Command/Query/Validation)  
 
 El código está diseñado para ser mantenible, escalable y seguir las mejores prácticas de DDD.
 
@@ -1109,4 +1109,4 @@ El código está diseñado para ser mantenible, escalable y seguir las mejores p
 
 ## Autor
 
-Desarrollado por Andrey como parte de la prueba técnica para demostrar habilidades en arquitectura de software, DDD y desarrollo .NET.
+Hecho con cariño y mucho café por Andrey.
