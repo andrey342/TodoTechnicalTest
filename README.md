@@ -1,27 +1,32 @@
-# TodoTechnicalTest - Sistema de Gestión de Tareas
+# TodoTechnicalTest - Sistema de Gestión de Tareas para la prueba técnica de BEYOND HOSPITALITY
 
 ## 📋 Índice
 
 1. [Introducción](#introducción)
-2. [Arquitectura del Sistema](#arquitectura-del-sistema)
-3. [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
-4. [Implementación del Dominio](#implementación-del-dominio)
-5. [Reglas de Negocio](#reglas-de-negocio)
-6. [Arquitectura de Microservicios](#arquitectura-de-microservicios)
-7. [Behaviours del Pipeline](#behaviours-del-pipeline)
-8. [CAP - Event Bus](#cap---event-bus)
-9. [API Gateway y Swagger Dinámico](#api-gateway-y-swagger-dinámico)
-9. [API Gateway y Swagger Dinámico](#api-gateway-y-swagger-dinámico)
-10. [Proyectos Shared y Utilidades](#proyectos-shared-y-utilidades)
-11. [Extensiones del Program.cs](#extensiones-del-programcs)
-12. [Docker y Containerización](#docker-y-containerización)
-13. [Decisiones Técnicas](#decisiones-técnicas)
+2. [Guía de Inicio Rápido (Instalación)](#guía-de-inicio-rápido)
+3. [URLs de Acceso y Monitorización](#urls-de-acceso-y-monitorización)
+4. [Docker y Containerización](#docker-y-containerización)
+5. [Arquitectura del Sistema](#arquitectura-del-sistema)
+6. [Domain-Driven Design (DDD)](#domain-driven-design-ddd)
+7. [Implementación del Dominio siguiendo las indicaciones de la prueba](#implementación-del-dominio-siguiendo-las-indicaciones-de-la-prueba)
+8. [Reglas de Negocio](#reglas-de-negocio)
+9. [Arquitectura de Microservicios](#arquitectura-de-microservicios)
+10. [Behaviours del Pipeline](#behaviours-del-pipeline)
+11. [CAP - Event Bus](#cap---event-bus)
+12. [API Gateway y Swagger Dinámico](#api-gateway-y-swagger-dinámico)
+13. [Proyectos Shared y Utilidades](#proyectos-shared-y-utilidades)
+14. [Extensiones del Program.cs](#extensiones-del-programcs)
+15. [SocketManagement Microservicio](#socketmanagement-microservicio)
+16. [Configuración y Variables de Entorno](#configuración-y-variables-de-entorno)
+17. [Decisiones Técnicas](#decisiones-técnicas)
+18. [Posibles Mejoras y Consideraciones Futuras](#posibles-mejoras-y-consideraciones-futuras)
+19. [Conclusión](#conclusión)
+20. [Autor](#autor)
 
 ---
 
 ## Introducción
-
-Este proyecto implementa un sistema de gestión de tareas (Todo Management) siguiendo principios de **Domain-Driven Design (DDD)** y arquitectura de microservicios. El sistema está diseñado para ser escalable, mantenible y seguir las mejores prácticas de desarrollo de software empresarial.
+Este proyecto implementa un sistema de gestión de tareas (Todo Management) siguiendo principios de **Domain-Driven Design (DDD)** y arquitectura de microservicios. El sistema está diseñado para ser escalable, mantenible y seguir las mejores prácticas de desarrollo de software.
 
 ### Objetivo del Desafío Técnico
 
@@ -29,7 +34,241 @@ El objetivo principal es demostrar maestría técnica en:
 - **Domain-Driven Design**: Modelado del dominio con agregados, entidades y value objects
 - **Arquitectura de Microservicios**: Separación de responsabilidades y comunicación entre servicios
 - **Testing y Calidad**: Implementación de reglas de negocio robustas y validaciones
-- **Proactividad**: Ir más allá de los requisitos mínimos con implementaciones adicionales
+- **Proactividad**: Implementaciones adicionales.
+
+---
+
+## Guía de Inicio Rápido
+
+Esta sección está diseñada para poner en marcha el sistema desde cero en tu máquina local.
+
+### Requisitos Previos
+
+*   **Docker Desktop**: Necesitas tener Docker instalado y ejecutándose.
+    *   [Descargar Docker Desktop para Windows](https://docs.docker.com/desktop/install/windows-install/) (o tu sistema operativo correspondiente).
+
+### Instalación y Compilación
+
+El proyecto utiliza **Docker Compose** para orquestar todos los servicios (Base de datos, Kafka, APIs, etc.). No necesitas instalar .NET SDK ni SQL Server localmente para ejecutar el sistema, ya que todo se ejecuta en contenedores aislados.
+
+1.  **Clonar el repositorio** (si tienes git instalado):
+    ```bash
+    git clone https://github.com/andrey342/TodoTechnicalTest.git
+    cd TodoTechnicalTest
+    ```
+
+2.  **Compilar y Levantar el Sistema**:
+    Abre una terminal (PowerShell, CMD o Bash) en la raíz del proyecto (donde está el archivo `docker-compose.yml`) y ejecuta:
+
+    ```bash
+    docker-compose up -d --build
+    ```
+    
+    > **Explicación**: El flag `--build` fuerza la compilación de las imágenes de Docker asegurando que tengas la última versión del código. El flag `-d` (detached) ejecuta los contenedores en segundo plano.
+
+    También puedes hacerlo desde la interfaz de **Visual Studio**:
+    - Establece el proyecto `docker-compose` como **Proyecto de Inicio** (Set as Startup Project).
+    - Pulsa **Iniciar** (Start/Run) o `F5`.
+
+3.  **Verificar el estado**:
+    Puedes ver si todo ha arrancado correctamente con:
+    ```bash
+    docker-compose ps
+    ```
+    Los servicios `sqlserver`, `kafka`, `zookeeper`, `apigateway.ag`, `todomanagement.api` y `socketmanagement.api` deberían estar en estado `Healthy`.
+
+### Ejecución de Tests (Opcional)
+
+Si deseas validar la integridad del código ejecutando la suite de pruebas unitarias:
+
+**Requisito**: Tener .NET 9 SDK instalado localmente.
+
+```bash
+# Tests de Dominio (Validan Reglas de negocio puras)
+dotnet test src/Microservices/TodoManagement/TodoManagement.Domain.UnitTests
+
+# Tests de API (Validan Validadores, Mappers y Handlers)
+dotnet test src/Microservices/TodoManagement/TodoManagement.API.UnitTests
+```
+
+También puedes ejecutar las pruebas desde la interfaz de **Visual Studio**:
+1. Haz clic derecho sobre la solución o el proyecto de tests.
+2. Selecciona **Ejecutar Pruebas** (Run Tests).
+
+---
+
+## URLs de Acceso y Monitorización
+
+Una vez que el sistema esté corriendo mediante Docker Compose, tendrás acceso a las siguientes herramientas y servicios:
+
+### 🌍 Puntos de Acceso Públicos (Simulado)
+
+*   **📘 API Gateway - Swagger Unificado**
+    *   **URL**: [http://localhost:32700/swagger/index.html](http://localhost:32700/swagger/index.html)
+    *   **Descripción**: Este es el **único punto de entrada** que debería usar una aplicación Frontend. Agrupa y expone las APIs de todos los microservicios subyacentes.
+
+*   **🕸️ Kafka UI**
+    *   **URL**: [http://localhost:8089/](http://localhost:8089/)
+    *   **Descripción**: Panel visual para administrar y monitorizar tu cluster de Kafka.
+    *   **Qué ver**: Puedes ir a la sección "Topics" para ver los eventos de integración (ej: `integration.todomanagement.todoitemcreated`) y ver los mensajes en tiempo real.
+
+### 🔧 Puntos de Acceso Internos (Solo Desarrollo)
+
+Estas URLs acceden directamente a los microservicios, saltándose el API Gateway. Útiles para debugging y ver el estado interno de CAP.
+
+**Microservicio: TodoManagement**
+*   **Swagger**: [http://localhost:32701/swagger/index.html](http://localhost:32701/swagger/index.html)
+*   **CAP Dashboard**: [http://localhost:32701/cap/index.html#/](http://localhost:32701/cap/index.html#/)
+    *   **Descripción**: Panel de control del Event Bus. Muestra los eventos publicados (Published) y recibidos (Received) por este servicio específico, incluyendo reintentos y errores.
+
+**Microservicio: SocketManagement**
+*   **Swagger**: [http://localhost:32702/swagger/index.html](http://localhost:32702/swagger/index.html)
+    *   **Descripción**: Aparece vacío porque no tiene APIs, solo tiene un socket para la comunicación con el frontend.
+*   **CAP Dashboard**: [http://localhost:32702/cap/index.html#/](http://localhost:32702/cap/index.html#/)
+
+---
+
+## Docker y Containerización
+
+El proyecto utiliza **Docker Compose** para orquestar todos los servicios necesarios del sistema, facilitando el desarrollo y despliegue en diferentes entornos.
+
+### Arquitectura de Contenedores
+
+El sistema está completamente containerizado y se compone de los siguientes servicios:
+
+#### Servicios de Infraestructura
+
+1. **SQL Server** (`sqlserver`)
+   - Imagen: `mcr.microsoft.com/mssql/server:2022-latest`
+   - Puerto: `1433` (mapeado al host)
+   - Base de datos: `TodoManagementDb`
+   - Health check configurado para verificar el estado del servidor
+
+2. **Zookeeper** (`zookeeper`)
+   - Imagen: `bitnamilegacy/zookeeper:3.9.3-debian-12-r22`
+   - Servicio de coordinación para Kafka
+   - Permite login anónimo para desarrollo
+
+3. **Kafka** (`kafka`)
+   - Imagen: `bitnamilegacy/kafka:3.3.1-debian-11-r9`
+   - Puerto interno: `9092`
+   - Configurado para comunicación con Zookeeper
+   - Health check para verificar que los topics están disponibles
+
+4. **Kafka UI** (`kafka-ui`)
+   - Imagen: `provectuslabs/kafka-ui:latest`
+   - Interfaz web para gestión y monitoreo de Kafka
+   - Puerto desarrollo: `8089` (configurado en override)
+   - Permite visualizar topics, consumidores y mensajes
+
+#### Servicios de Aplicación
+
+5. **API Gateway** (`apigateway.ag`)
+   - Construido desde `src/ApiGateways/ApiGateway.AG/Dockerfile`
+   - Puerto: `32700` (mapeado desde `8080` interno)
+   - Dependencias: Kafka
+   - Variables de entorno para autenticación y configuración de CAP
+
+6. **TodoManagement API** (`todomanagement.api`)
+   - Construido desde `src/Microservices/TodoManagement/TodoManagement.API/Dockerfile`
+   - Puerto desarrollo: `32701` (configurado en override)
+   - Dependencias: SQL Server, Kafka, API Gateway
+   - Health check para verificar el estado del servicio
+   - Política de reinicio: `unless-stopped`
+
+7. **SocketManagement API** (`socketmanagement.api`)
+   - Construido desde `src/Microservices/SocketManagement/SocketManagement.API/Dockerfile`
+   - Puerto desarrollo: `32702` (configurado en override)
+   - Dependencias: Kafka, API Gateway
+   - Health check para verificar el estado del servicio
+   - Política de reinicio: `unless-stopped`
+
+### Configuración de Docker Compose
+
+#### `docker-compose.yml`
+
+Archivo principal que define todos los servicios y su configuración base:
+
+**Características principales**:
+- **Red personalizada**: `todotechnicaltest_backend` (bridge network) para aislar la comunicación entre servicios
+- **Health checks**: Configurados para SQL Server, Kafka y los servicios de aplicación
+- **Variables de entorno**: Configuración externa mediante variables de entorno
+- **Dependencias**: Orden de inicio correcto mediante `depends_on`
+
+**Estructura de servicios**:
+- Servicios de infraestructura primero (SQL Server, Zookeeper, Kafka)
+- Servicios de aplicación después (API Gateway, TodoManagement API, SocketManagement API)
+
+#### `docker-compose.override.yml`
+
+Archivo de override específico para desarrollo que modifica la configuración base:
+
+**Configuraciones de desarrollo**:
+- **Kafka UI**: Expone el puerto `8089` para acceso desde el host
+- **TodoManagement API**: Expone el puerto `32701` para acceso directo al servicio, incluyendo:
+  - CAP Dashboard (disponible en desarrollo)
+  - Endpoints de debugging
+  - Swagger UI
+  - Health checks
+- **SocketManagement API**: Expone el puerto `32702` para acceso directo al servicio, incluyendo:
+  - CAP Dashboard
+  - Endpoints de debugging
+  - Swagger UI
+  - Health checks
+
+**Uso**:
+Este archivo se carga automáticamente en desarrollo y permite personalizar puertos y configuraciones sin modificar el archivo principal. Para producción, claramente este archivo no debería incluirse o debería tener valores diferentes.
+
+### Variables de Entorno
+
+El sistema utiliza variables de entorno para configurar:
+
+- **SQL Server**: Usuario y contraseña
+- **Kafka**: Bootstrap servers y configuración del broker
+- **API Gateway**: Configuración de autenticación, authority, audience, etc.
+- **Microservicios**: Connection strings, nombres de servicio, URLs base
+
+### Ventajas de la Containerización
+
+1. **Reproducibilidad**: El entorno es idéntico en desarrollo, testing y producción
+2. **Aislamiento**: Cada servicio corre en su propio contenedor con dependencias aisladas
+3. **Escalabilidad**: Fácil escalado horizontal de servicios individuales
+4. **Portabilidad**: Funciona en cualquier sistema que soporte Docker
+5. **Desarrollo simplificado**: Un simple `docker-compose up` inicia todo el ecosistema
+
+### Comandos Útiles
+
+```bash
+# Iniciar todos los servicios
+docker-compose up -d
+
+# Iniciar servicios y reconstruir imágenes
+docker-compose up -d --build
+
+# Ver logs de todos los servicios
+docker-compose logs -f
+
+# Ver logs de un servicio específico
+docker-compose logs -f todomanagement.api
+
+# Detener todos los servicios
+docker-compose down
+
+# Detener y eliminar volúmenes
+docker-compose down -v
+
+# Ver estado de los servicios
+docker-compose ps
+```
+
+### Health Checks
+
+Todos los servicios críticos incluyen health checks:
+- **SQL Server**: Verifica que el proceso `sqlservr` está corriendo
+- **Kafka**: Verifica que los topics están disponibles
+- **Servicios de aplicación**: Verifican el endpoint `/healthz`
+
+Esto permite que Docker Compose gestione correctamente las dependencias y reinicios.
 
 ---
 
@@ -98,11 +337,11 @@ El proyecto incluye clases base reutilizables en `SeedWork`:
 
 ---
 
-## Implementación del Dominio
+## Implementación del Dominio siguiendo las indicaciones de la prueba
 
 ### Interfaz ITodoList
 
-La interfaz `ITodoList` define el contrato público para las operaciones del agregado:
+La interfaz `ITodoList` define el contrato establecido en la prueba:
 
 ```csharp
 public interface ITodoList 
@@ -115,7 +354,7 @@ public interface ITodoList
 }
 ```
 
-**Decisión de Diseño**: La interfaz se implementa directamente en `TodoList` para mantener la encapsulación del agregado y garantizar que todas las operaciones pasen por la raíz del agregado.
+**Implementación**: La interfaz se implementa directamente en `TodoList`.
 
 ### Interfaz ITodoListRepository
 
@@ -155,8 +394,6 @@ if (_progressions.Any())
 }
 ```
 
-**Razón**: Garantiza un historial cronológico coherente y evita inconsistencias en el progreso.
-
 ### 2. Validación de Porcentaje en Progression
 
 **Reglas**:
@@ -173,8 +410,6 @@ if (currentTotal + percent > 100m)
     throw new ArgumentException("El progreso total superaría el 100%.");
 ```
 
-**Razón**: Mantiene la integridad de los datos y evita progresos inválidos.
-
 ### 3. Restricción de Modificación
 
 **Regla**: No se permite actualizar o eliminar un TodoItem si su progreso total acumulado **supera el 50%**.
@@ -187,8 +422,6 @@ if (!item.CanBeModified())
         $"No se puede modificar porque el progreso ({item.GetTotalProgress()}%) supera el 50%.");
 }
 ```
-
-**Razón**: Protege la integridad de tareas que están avanzadas, evitando modificaciones que podrían afectar el historial de progreso.
 
 ### 4. IsCompleted Calculado
 
@@ -210,8 +443,6 @@ if (!Masters.CategoryMaster.IsValidCategory(category))
     throw new ArgumentException($"Category '{category}' is invalid...");
 }
 ```
-
-**Razón**: Estandariza la categorización de tareas y evita datos inconsistentes o errores de escritura.
 
 ---
 
@@ -253,7 +484,7 @@ Interfaz base que proporciona funcionalidades comunes de lectura y verificación
 
 **Métodos Principales**:
 - `Task<T> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)`: Obtención simple por ID.
-- `Task<T> GetByIdAsync(Guid id, Func<IQueryable<T>, IQueryable<T>> includes, CancellationToken cancellationToken = default)`: **Nuevo método** que permite especificar relaciones (`Includes`) para carga ansiosa (Eager Loading) al obtener por ID.
+- `Task<T> GetByIdAsync(Guid id, Func<IQueryable<T>, IQueryable<T>> includes, CancellationToken cancellationToken = default)`: Permite especificar relaciones (`Includes`) para carga ansiosa (Eager Loading) al obtener por ID.
 - `Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)`: Verificación eficiente de existencia.
 
 #### IQueryRepository<T>
@@ -323,32 +554,11 @@ El sistema implementa un pipeline de comportamientos transversales usando el pat
 
 **Beneficio**: Trazabilidad completa de las operaciones para debugging y auditoría.
 
-**Beneficio**: Validación centralizada y consistente antes de procesar la lógica de negocio.
-
-**BaseValidator**:
-Se utiliza una clase base `BaseValidator<T>` que simplifica drásticamente la creación de validadores mediante métodos genéricos predefinidos como:
-- `ValidateUniqueness`: Verifica unicidad en BD.
-- `ValidateExists`: Verifica existencia de claves foráneas.
-- `Require`: Validaciones de obligatoriedad estándar.
-
-### 3. ValidationBehavior
-
-**Propósito**: Valida las solicitudes usando **FluentValidation**.
-
-**Orden**: Tercero en el pipeline (después de Idempotency)
-
-**Implementación**:
-- Ejecuta todos los validadores en paralelo
-- Recolecta todos los errores de validación
-- Lanza `ValidationException` si hay errores
-
-**Beneficio**: Validación centralizada y consistente antes de procesar la lógica de negocio.
-
 ### 2. IdempotencyBehavior
 
 **Propósito**: Garantiza la idempotencia de las operaciones.
 
-**Orden**: **Segundo** en el pipeline (antes de Validación)
+**Orden**: **Segundo** en el pipeline
 
 **Implementación**:
 - Verifica si la solicitud ya fue procesada usando `IRequestManager`
@@ -357,6 +567,25 @@ Se utiliza una clase base `BaseValidator<T>` que simplifica drásticamente la cr
 - Se ejecuta antes de la validación para evitar re-validar solicitudes ya procesadas y exitosas.
 
 **Beneficio**: Previene procesamiento duplicado y optimiza el rendimiento en reintentos.
+
+### 3. ValidationBehavior
+
+**Propósito**: Valida las solicitudes usando **FluentValidation**.
+
+**Orden**: Tercero en el pipeline
+
+**Implementación**:
+- Ejecuta todos los validadores en paralelo
+- Recolecta todos los errores de validación
+- Lanza `ValidationException` si hay errores
+
+**Beneficio**: Validación centralizada y consistente antes de procesar la lógica de negocio.
+
+**BaseValidator**:
+Se utiliza una clase base `BaseValidator<T>` que simplifica drásticamente la creación de validadores mediante métodos genéricos predefinidos como:
+- `ValidateUniqueness`: Verifica unicidad en BD.
+- `ValidateExists`: Verifica existencia de claves foráneas.
+- `Require`: Validaciones de obligatoriedad estándar.
 
 ### 4. TransactionBehavior
 
@@ -467,14 +696,14 @@ Se utiliza el atributo `IncludeInGatewayAttribute` para controlar granularmente 
 - Se puede restringir a un gateway específico (ej: `targets: [ApiGateway]`) como se ha hecho en algunas APIs de ejemplo.
 - Permite decidir endpoint por endpoint qué se expone y dónde.
 
-### Rationale: ¿Por qué un API Gateway (AG) y no exponer cada Microservicio?
+### ¿Por qué un API Gateway (AG) y no exponer cada Microservicio?
 
 En este sistema, el **API Gateway (AG)** actúa como el único punto de entrada hacia la red interna de microservicios.
 
 **Ventajas Técnicas y de Seguridad**:
 1.  **Swagger Unificado y NSWAG**: El AG agrupa todos los Swaggers de los microservicios en un único endpoint. Esto permite que el Frontend utilice la librería **NSWAG** para generar automáticamente el `api-client` completo sin tener que gestionar múltiples URLs.
 2.  **Seguridad de Red**: Solo el AG es accesible desde el exterior. En un entorno real, los microservicios no tendrían puertos públicos, reduciendo drásticamente la superficie de ataque. 
-    > [!NOTE]
+    > [NOTA!]
     > En este proyecto de desarrollo, se han asignado puertos a los microservicios para facilitar las pruebas, pero en producción estos estarían aislados.
 3.  **Simplificación de Mantenimiento**: Centralizamos la configuración de **CORS**, autenticación, rate limiting y logging en un solo sitio, evitando la repetición de código y lógica en cada microservicio.
 4.  **Abstracción de Rutas**: El front-end solo conoce la URL del AG. El redireccionamiento interno mediante YARP permite mover o escalar microservicios sin que el cliente tenga que cambiar su configuración.
@@ -496,7 +725,7 @@ Para mantener el código limpio y reducir el "ruido" en los archivos, se utiliza
 **Contenido**:
 - **IntegrationEvent**: Clase base para eventos de integración
 - **GatewayRoutesEvent**: Evento para comunicación de rutas con el gateway
-- **ViewModels**: DTOs compartidos (si aplica)
+- **TodoListReportGeneratedIntegrationEvent**: Evento de integración para generar informes de listas de tareas
 
 **Ventaja**: Evita duplicación de código y garantiza compatibilidad entre servicios.
 
@@ -516,7 +745,7 @@ Para mantener el código limpio y reducir el "ruido" en los archivos, se utiliza
 
 ## Extensiones del Program.cs
 
-El sistema utiliza extensiones para mantener el `Program.cs` limpio y organizado:
+El sistema utiliza extensiones para mantener el `Program.cs` del Microservicio **TodoManagement** limpio y organizado:
 
 ### DependencyInjectionExtensions
 
@@ -546,143 +775,27 @@ Esto garantiza que cualquier desarrollador pueda clonar el repo y ejecutar `dock
 
 ---
 
-## Configuración y Variables de Entorno
+## SocketManagement Microservicio
 
-> [!IMPORTANT]  
-> Se ha incluido el archivo `.env` en el repositorio **únicamente para facilitar la ejecución de esta prueba técnica**.  
-> En un proyecto real y profesional, el archivo `.env` **NUNCA** se subiría al control de versiones, sino que se gestionaría mediante secretos (Azure Key Vault, GitHub Secrets, etc.).
+Este microservicio se encarga de la comunicación en tiempo real con el exterior (Frontend) utilizando **SignalR**.
+
+### Responsabilidades
+- **Gestión de Conexiones**: Mantiene los sockets abiertos con los clientes.
+- **Consumo de Eventos**: Escucha eventos de integración del sistema que requieren notificación inmediata.
+- **Broadcasting**: Redirige la información de los eventos a los clientes de SignalR correspondientes.
+
+### Implementación Técnica
+- **SignalR Hubs**: Implementa `PrintHub` para notificaciones de reportes.
+- **Consumidores CAP**: Procesa eventos como `TodoListReportGeneratedIntegrationEvent`.
+- **Manejo de Payloads Grandes**: Capacidad para procesar eventos comprimidos (Gzip) cuando el reporte supera el tamaño estándar de mensaje de Kafka.
 
 ---
 
-## Docker y Containerización
+## Configuración y Variables de Entorno
 
-El proyecto utiliza **Docker Compose** para orquestar todos los servicios necesarios del sistema, facilitando el desarrollo y despliegue en diferentes entornos.
-
-### Arquitectura de Contenedores
-
-El sistema está completamente containerizado y se compone de los siguientes servicios:
-
-#### Servicios de Infraestructura
-
-1. **SQL Server** (`sqlserver`)
-   - Imagen: `mcr.microsoft.com/mssql/server:2022-latest`
-   - Puerto: `1433` (mapeado al host)
-   - Base de datos: `TodoManagementDb`
-   - Health check configurado para verificar el estado del servidor
-
-2. **Zookeeper** (`zookeeper`)
-   - Imagen: `bitnamilegacy/zookeeper:3.9.3-debian-12-r22`
-   - Servicio de coordinación para Kafka
-   - Permite login anónimo para desarrollo
-
-3. **Kafka** (`kafka`)
-   - Imagen: `bitnamilegacy/kafka:3.3.1-debian-11-r9`
-   - Puerto interno: `9092`
-   - Configurado para comunicación con Zookeeper
-   - Health check para verificar que los topics están disponibles
-
-4. **Kafka UI** (`kafka-ui`)
-   - Imagen: `provectuslabs/kafka-ui:latest`
-   - Interfaz web para gestión y monitoreo de Kafka
-   - Puerto desarrollo: `8089` (configurado en override)
-   - Permite visualizar topics, consumidores y mensajes
-
-#### Servicios de Aplicación
-
-5. **API Gateway** (`apigateway.ag`)
-   - Construido desde `src/ApiGateways/ApiGateway.AG/Dockerfile`
-   - Puerto: `32700` (mapeado desde `8080` interno)
-   - Dependencias: Kafka
-   - Variables de entorno para autenticación y configuración de CAP
-
-6. **TodoManagement API** (`todomanagement.api`)
-   - Construido desde `src/Microservices/TodoManagement/TodoManagement.API/Dockerfile`
-   - Puerto desarrollo: `32701` (configurado en override)
-   - Dependencias: SQL Server, Kafka, API Gateway
-   - Health check para verificar el estado del servicio
-   - Política de reinicio: `unless-stopped`
-
-### Configuración de Docker Compose
-
-#### `docker-compose.yml`
-
-Archivo principal que define todos los servicios y su configuración base:
-
-**Características principales**:
-- **Red personalizada**: `todotechnicaltest_backend` (bridge network) para aislar la comunicación entre servicios
-- **Health checks**: Configurados para SQL Server, Kafka y los servicios de aplicación
-- **Variables de entorno**: Configuración externa mediante variables de entorno
-- **Dependencias**: Orden de inicio correcto mediante `depends_on`
-
-**Estructura de servicios**:
-- Servicios de infraestructura primero (SQL Server, Zookeeper, Kafka)
-- Servicios de aplicación después (API Gateway, TodoManagement API)
-
-#### `docker-compose.override.yml`
-
-Archivo de override específico para desarrollo que modifica la configuración base:
-
-**Configuraciones de desarrollo**:
-- **Kafka UI**: Expone el puerto `8089` para acceso desde el host
-- **TodoManagement API**: Expone el puerto `32701` para acceso directo al servicio, incluyendo:
-  - CAP Dashboard (disponible en desarrollo)
-  - Endpoints de debugging
-  - Swagger UI
-  - Health checks
-
-**Uso**:
-Este archivo se carga automáticamente en desarrollo y permite personalizar puertos y configuraciones sin modificar el archivo principal. Para producción, este archivo no debería incluirse o debería tener valores diferentes.
-
-### Variables de Entorno
-
-El sistema utiliza variables de entorno para configurar:
-
-- **SQL Server**: Usuario y contraseña
-- **Kafka**: Bootstrap servers y configuración del broker
-- **API Gateway**: Configuración de autenticación, authority, audience, etc.
-- **Microservicios**: Connection strings, nombres de servicio, URLs base
-
-### Ventajas de la Containerización
-
-1. **Reproducibilidad**: El entorno es idéntico en desarrollo, testing y producción
-2. **Aislamiento**: Cada servicio corre en su propio contenedor con dependencias aisladas
-3. **Escalabilidad**: Fácil escalado horizontal de servicios individuales
-4. **Portabilidad**: Funciona en cualquier sistema que soporte Docker
-5. **Desarrollo simplificado**: Un simple `docker-compose up` inicia todo el ecosistema
-
-### Comandos Útiles
-
-```bash
-# Iniciar todos los servicios
-docker-compose up -d
-
-# Iniciar servicios y reconstruir imágenes
-docker-compose up -d --build
-
-# Ver logs de todos los servicios
-docker-compose logs -f
-
-# Ver logs de un servicio específico
-docker-compose logs -f todomanagement.api
-
-# Detener todos los servicios
-docker-compose down
-
-# Detener y eliminar volúmenes
-docker-compose down -v
-
-# Ver estado de los servicios
-docker-compose ps
-```
-
-### Health Checks
-
-Todos los servicios críticos incluyen health checks:
-- **SQL Server**: Verifica que el proceso `sqlservr` está corriendo
-- **Kafka**: Verifica que los topics están disponibles
-- **Servicios de aplicación**: Verifican el endpoint `/healthz`
-
-Esto permite que Docker Compose gestione correctamente las dependencias y reinicios.
+> [IMPORTANTE!]  
+> Se ha incluido el archivo `.env` en el repositorio **únicamente para facilitar la ejecución de esta prueba técnica**.  
+> En un proyecto real y profesional, el archivo `.env` **NUNCA** se subiría al control de versiones, sino que se gestionaría mediante secretos (Azure Key Vault, GitHub Secrets, etc.).
 
 ---
 
@@ -691,6 +804,7 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 ### 1. ¿Por qué DDD?
 
 **Razón**: El dominio de gestión de tareas tiene reglas de negocio complejas que deben estar encapsuladas y protegidas. DDD permite:
+- Un único punto de entrada para todas las operaciones
 - Modelar el dominio de forma clara y expresiva
 - Proteger las invariantes del dominio
 - Facilitar el testing de la lógica de negocio
@@ -709,6 +823,7 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 - Soporte para múltiples brokers (Kafka, RabbitMQ, etc.)
 - Manejo automático de reintentos y fallos
 - Dashboard para monitoreo
+- Reduce el código de implementación, el tiempo de desarrollo y la mantenibilidad
 
 ### 4. ¿Por qué YARP para el API Gateway?
 
@@ -728,20 +843,20 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 
 ### 6. Implementación de PrintItems
 
-**Decisión**: El método `PrintItems()` genera salida formateada en consola con:
+El método `PrintItems()` genera salida formateada en consola con:
 - Ordenamiento por `ItemId`
 - Formato específico: `{ItemId}) {Title} - {Description} ({Category}) Completed:{IsCompleted}`
 - Barras de progreso visuales con porcentaje acumulado
 - Formato de fecha: `M/d/yyyy hh:mm:ss tt`
 
-**Razón**: Cumple con el requerimiento específico del desafío técnico manteniendo la lógica en el dominio.
+**Razón**: Cumple con el requerimiento específico de la prueba técnica manteniendo.
 **Nota**: Cuando se registra una progresión (`RegisterProgression`), el sistema invoca automáticamente `PrintItems()` para mostrar en la consola el estado actualizado de la lista y sus barras de progreso.
 
 ### 7. Generación de Archivo de PrintItems
 
 **Desafío**: El método `PrintItems()` de la interfaz `ITodoList` retorna `void` y se requiere una API que genere un archivo con el contenido de `PrintItems` y lo envíe mediante un evento de integración hasta el cliente final.
 
-**Solución**: Se ha completado el flujo utilizando **Domain Events** y un microservicio de Notificaciones/WebSockets (`SocketManagement`).
+**Solución**: Se ha completado el flujo utilizando **Domain Events** y un microservicio de Notificaciones/WebSockets (`SocketManagement`) para evitar la modificación de la interfaz ITodoList.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -753,7 +868,7 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 │  2. GenerateTodoListReportCommandHandler (TodoManagement.API)               │
 │     - Llama a todoList.PrintItems()                                         │
 │     ▼                                                                       │
-│  3. TodoList.PrintItems() (Domain)                                          │
+│  3. TodoList.PrintItems() (TodoManagement.Domain)                           │
 │     - Genera contenido y emite ItemsPrintedDomainEvent                      │
 │     ▼                                                                       │
 │  4. ItemsPrintedDomainEventHandler (TodoManagement.API)                     │
@@ -768,7 +883,7 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 │     - Envía el contenido del archivo (Base64) a los clientes conectados     │
 │     ▼                                                                       │
 │  8. Frontend (Cliente)                                                      │
-│     - Recibe el evento "PrintItems" y muestra/descarga el reporte            │
+│     - Recibe el evento "PrintItems" y muestra/descarga el reporte           │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -778,28 +893,14 @@ Esto permite que Docker Compose gestione correctamente las dependencias y reinic
 2. **Escalabilidad**: El manejo de miles de conexiones concurrentes recae sobre un MS especializado (`SocketManagement`).
 3. **Resiliencia**: Si el servicio de sockets está caído, CAP reintentará el envío cuando vuelva a estar online.
 
----
-
-## SocketManagement Microservice
-
-Este microservicio se encarga de la comunicación en tiempo real con el exterior (Frontend) utilizando **SignalR**.
-
-### Responsabilidades
-- **Gestión de Conexiones**: Mantiene los sockets abiertos con los clientes.
-- **Consumo de Eventos**: Escucha eventos de integración del sistema que requieren notificación inmediata.
-- **Broadcasting**: Redirige la información de los eventos a los clientes de SignalR correspondientes.
-
-### Implementación Técnica
-- **SignalR Hubs**: Implementa `PrintHub` para notificaciones de reportes.
-- **Consumidores CAP**: Procesa eventos como `TodoListReportGeneratedIntegrationEvent`.
-- **Manejo de Payloads Grandes**: Capacidad para procesar eventos comprimidos (Gzip) cuando el reporte supera el tamaño estándar de mensaje de Kafka.
-
 **Por qué Domain Events**:
 1. **No modifica la interfaz `ITodoList`**: La firma sigue siendo `void PrintItems()`
 2. **No duplica código**: La lógica de formateo está solo en el dominio
 3. **Sincronización automática**: Si `PrintItems` cambia, el archivo generado también
 4. **Sigue principios DDD**: Los eventos de dominio son la forma correcta de comunicar efectos secundarios
 5. **Transaccionalidad**: El evento se publica dentro de la misma transacción (garantizado por CAP)
+
+---
 
 ### 8. ¿Por qué Microservicios en lugar de un Monolito?
 
@@ -835,7 +936,6 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 **Razón**:
 - **Foco en el Dominio**: Permite concentrar el esfuerzo en reglas de negocio complejas (progresiones, fechas) en lugar de CRUDs básicos.
 - **Validación Fuerte**: Las categorías son conocidas en tiempo de compilación y validadas estrictamente por el dominio.
-- **Extensibilidad**: Preparado para migrar a base de datos en el futuro sin cambiar la interfaz pública del repositorio.
 
 ---
 
@@ -845,12 +945,12 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 
 **Razón**: 
 - Reduce la complejidad de los constructores y firmas de métodos en la API.
-- Facilita la inyección de dependencias transversales en todos los endpoints sin modificar su firma individualmente (pseudo-herencia de servicios).
+- Facilita la inyección de dependencias transversales en todos los endpoints.
 - Mantiene el código de los endpoints limpio y centrado en la lógica de request/response.
 
 ### 11. Estrategia de Identificadores (GUID vs ItemId)
 
-**Decisión**: Uso dual de identificadores para satisfacer tanto necesidades técnicas como de negocio.
+**Decisión**: Uso dual de identificadores para satisfacer tanto necesidades de la prueba técnica como de los propios microservicios.
 
 - **Id (GUID)**: Identificador único del sistema (Primary Key). Generado automáticamente por la entidad base (`Entity`). Cumple con las recomendaciones de DDD para identidad global única.
 - **ItemId (int)**: Identificador de negocio legible y secuencial.
@@ -858,22 +958,7 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 **Estado Actual**:
 - El `ItemId` actúa como un **contador global** único para todos los items del sistema (`_repository.GetNextId()`).
 
----
-
-## Posibles Mejoras y Consideraciones Futuras
-
-### 1. Gestión de IDs en AddItem
-
-**Situación Actual**: El método `AddItem` de `ITodoList` recibe un parámetro `id`, pero la clase base `Entity` ya genera automáticamente un `Guid` único al crear la entidad.
-
-**Mejora Propuesta**: 
-- Eliminar el parámetro `id` de `AddItem` ya que el `Guid` se genera automáticamente
-- Eliminar la validación de existencia de `ItemId` duplicado, ya que el sistema de base de datos maneja la unicidad mediante índices
-- El `ItemId` (identificador de negocio secuencial) puede seguir siendo gestionado por el repositorio mediante `GetNextId()`, pero el `Guid` (identificador técnico) se genera automáticamente
-
-**Beneficio**: Simplifica la API y reduce código redundante.
-
-### 2. Domain Events y Unit of Work
+### 12. Domain Events y Unit of Work
 
 **Implementación Actual**:
 - ✅ **Domain Events**: El sistema implementa el patrón de Domain Events mediante la clase base `Entity` que mantiene una colección de `IDomainEvent`
@@ -887,17 +972,17 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 
 **Beneficio**: Garantiza consistencia entre el estado persistido y los eventos publicados.
 
-### 3. Uso de Inteligencia Artificial
+### 13. Uso de Inteligencia Artificial
 
-**Transparencia**: Este proyecto ha utilizado Inteligencia Artificial (IA) como herramienta de asistencia en las siguientes áreas:
+Este proyecto ha utilizado Inteligencia Artificial (IA) como herramienta de asistencia en las siguientes áreas:
 
 - **Comentarios en Métodos**: Los comentarios XML y documentación de métodos fueron generados con asistencia de IA para mantener consistencia y claridad
-- **README.md**: La documentación técnica y arquitectónica fue desarrollada con asistencia de IA para asegurar completitud y estructura profesional
+- **README.md**: La documentación técnica y arquitectónica fue desarrollada con asistencia de IA para asegurar completitud, estructura profesional y escritura más entendible que si lo hubiera hecho yo :)
 - **Tareas Repetitivas**: Para código que sigue patrones similares (como repositorios base, validaciones, etc.), se utilizó IA para acelerar el desarrollo manteniendo la consistencia
 
 **Nota**: Todo el código fue revisado, validado y ajustado manualmente para garantizar calidad y cumplimiento de los requisitos del desafío técnico.
 
-### 4. Separación de Interfaces por Responsabilidad
+### 14. Separación de Interfaces por Responsabilidad
 
 **Arquitectura Implementada**:
 - **ICommandRepository<T>**: Interfaces para operaciones de escritura (commands)
@@ -910,32 +995,48 @@ Reconozco que para este desafío técnico específico, un monolito sería comple
 - Claridad en la intención del código
 - Mejor rendimiento en validaciones (usando `AsNoTracking`)
 
-### 5. Entidad Usuario y Multi-tenancy
+---
+
+## Posibles Mejoras y Consideraciones Futuras
+
+### 1. Gestión de IDs en AddItem
+
+**Situación Actual**: El método `AddItem` de `ITodoList` recibe un parámetro `id`, pero la clase base `Entity` ya genera automáticamente un `Guid` único al crear la entidad. Esto se ha implementado para mantener las consideraciones de la prueba técnica.
+
+**Mejora Propuesta**: 
+- Eliminar el parámetro `id` de `AddItem` ya que el `Guid` se genera automáticamente
+- Eliminar la validación de existencia de `ItemId` duplicado, ya que el sistema de base de datos maneja la unicidad mediante índices
+- El `ItemId` (identificador de negocio secuencial) puede seguir siendo gestionado por el repositorio mediante `GetNextId()`, pero el `Guid` (identificador técnico) se genera automáticamente
+
+**Beneficio**: Simplifica la API, reduce código redundante y las operaciones POST/PUT/GET usan la Primary Key (Guid) como deberia ser.
+
+### 2. Entidad Usuario y Multi-tenancy
 
 Actualmente el sistema opera en un contexto global. Una evolución natural sería:
 - Introducir la entidad `Usuario` como Aggregate Root.
 - Vincular cada `TodoList` a un usuario específico.
 - Esto permitiría que cada usuario gestione sus propias listas de forma aislada.
 
-### 6. APIs y Repositorios Genéricos
+### 3. APIs y Repositorios Genéricos
 
 Dado que Command y Query Repositories comparten patrones base:
 - Se podrían implementar **APIs Genéricas** que expongan operaciones CRUD estándar para cualquier entidad.
 - Los parámetros de entrada para Queries podrían refactorizarse para aceptar **Objetos JSON** complejos en lugar de múltiples parámetros de query string, permitiendo filtros dinámicos y flexibles.
 
-### 7. ItemId como Contador por TodoList
+**Beneficio**: De esta manera cada entidad tienen sus propias APIs y repositorios genéricos automáticamente sin necesidad de repetir código.
+
+### 4. ItemId como Contador por TodoList
 
 Para mejorar la experiencia de usuario:
 - Refactorizar la generación de `ItemId` para que sea un contador **local** por cada `TodoList` (ej: Lista A tiene items 1, 2, 3; Lista B tiene items 1, 2).
-- *Nota*: Esto requeriría gestionar la concurrencia a nivel de lista en la creación de items.
 
-### 8. Actualizaciones en Tiempo Real (SignalR)
+### 5. Actualizaciones en Tiempo Real (SignalR)
 
 Para una experiencia de usuario moderna y reactiva:
 - Implementar **SignalR** para comunicación bidireccional.
-- **Caso de Uso**: Cuando un `TodoItem` se marca como completado o su progreso cambia, se envía un evento de integración. Un servicio consumidor notifica vía SignalR al frontend para actualizar la barra de progreso y el estado "Completado" en tiempo real sin recargar la página.
+- **Caso de Uso**: Cuando un `TodoItem` se marca como completado o su progreso cambia, se envía un evento de integración. Un servicio consumidor notifica vía SignalR al frontend para actualizar la barra de progreso y el estado "Completado" en tiempo real sin recargar la página o forzar un refresco de la lista.
 
-### 9. Otras Mejoras Futuras
+### 6. Otras Mejoras Futuras
 
 - **Caché**: Implementar caché distribuida (Redis) para operaciones de lectura frecuentes.
 - **Event Sourcing**: Considerar Event Sourcing para auditoría completa y reconstrucción de estados históricos.
@@ -944,7 +1045,7 @@ Para una experiencia de usuario moderna y reactiva:
 
 ## Conclusión
 
-Este proyecto demuestra un enfoque profesional y completo para el desarrollo de software empresarial, implementando:
+Este proyecto demuestra un enfoque profesional y completo para el desarrollo de software. Es el trabajo de años de experiencia con Microservicios y mejoras constantes de mis conocimientos, implementando:
 
 ✅ **Domain-Driven Design** con agregados bien definidos  
 ✅ **Arquitectura de Microservicios** escalable  
@@ -957,47 +1058,11 @@ Este proyecto demuestra un enfoque profesional y completo para el desarrollo de 
 ✅ **Unit of Work** para gestión transaccional  
 ✅ **Separación de Interfaces** por responsabilidad (Command/Query/Validation)  
 
-El código está diseñado para ser mantenible, escalable y seguir las mejores prácticas de la industria.
+El código está diseñado para ser mantenible, escalable y seguir las mejores prácticas de DDD.
 
 ---
 
-## Testing
-
-El proyecto cuenta con una suite de tests automatizados que cubren tanto la lógica del dominio como la capa de aplicación.
-
-### Estructura de Tests
-
-1.  **TodoManagement.Domain.UnitTests**:
-    *   **Enfoque**: Validar las reglas de negocio, invariantes y comportamiento de las entidades y agregados.
-    *   **Cobertura**:
-        *   Progresiones (fechas secuenciales, porcentajes válidos).
-        *   Restricciones de modificación (no editar si progreso > 50%).
-        *   Cálculo de `IsCompleted`.
-        *   Formato de salida de `PrintItems`.
-    *   **Tecnologías**: xUnit, FluentAssertions, Moq.
-
-2.  **TodoManagement.API.UnitTests**:
-    *   **Enfoque**: Validar los Comandos y Validadores de la capa de aplicación.
-    *   **Cobertura**:
-        *   Handlers de comandos (Create, Add, Update, Remove, RegisterProgression).
-        *   Validadores FluentValidation (reglas de negocio, unicidad, existencia).
-        *   Comprobación de Idempotencia.
-    *   **Tecnologías**: xUnit, FluentAssertions, Moq, FluentValidation.TestHelper.
-
-### Cómo Ejecutar los Tests
-
-Para ejecutar un proyecto específico:
-
-```bash
-# Tests de Dominio
-dotnet test src/Microservices/TodoManagement/TodoManagement.Domain.UnitTests
-
-# Tests de API
-dotnet test src/Microservices/TodoManagement/TodoManagement.API.UnitTests
-```
-
----
 
 ## Autor
 
-Desarrollado como parte del desafío técnico para demostrar habilidades en arquitectura de software, DDD y desarrollo .NET empresarial.
+Desarrollado por Andrey como parte de la prueba técnica para demostrar habilidades en arquitectura de software, DDD y desarrollo .NET.
